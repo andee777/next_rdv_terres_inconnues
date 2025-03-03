@@ -8,6 +8,7 @@ import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/20/solid';
 import selectedMarker from './marker-iconred.png';
 import MarkerClusterGroup from "react-leaflet-markercluster";
+// import 'react-leaflet-markercluster/styles'
 
 const defaultIcon = L.icon({
   iconUrl: markerIcon.src,
@@ -30,7 +31,7 @@ const selectedIcon = L.icon({
 const MapComponent = ({ markers }) => {
   const [selectedMarker, setSelectedMarker] = useState(null);
   const mapRef = useRef(null);
-  console.log(markers.map((item, i) => [item.lat, item.lon]));
+  // console.log(markers.map((item, i) => [item.lat, item.lon]));
   return (
     <>
 
@@ -38,10 +39,10 @@ const MapComponent = ({ markers }) => {
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         <MarkerClusterGroup showCoverageOnHover={false} >
         {markers && markers.map((item, i) => (
-          item.lat && item.lon && (
+          item.coordinates && (
             <Marker
               key={i}
-              position={[item.lat, item.lon]}
+              position={item.coordinates}
               icon={item === selectedMarker ? selectedIcon : defaultIcon}
               eventHandlers={{
                 click: () => {
@@ -51,8 +52,8 @@ const MapComponent = ({ markers }) => {
             >
               <Popup>
                 <div className="flex flex-col items-center w-100 max-w-[300px] p-2">
-                  <h3 className="text-xl font-semibold ">{item.celebrite}</h3>
-                  <div className="text-lg mt-1 text-gray-700 align-left w-100">{item.peuple ? item.peuple : "No peuple"}</div>
+                  <h3 className="text-xl font-semibold ">{item.peuple ? item.peuple : "No peuple"}</h3>
+                  <div className="text-lg mt-1 text-gray-700 align-left w-100">{item.celebrite ? item.celebrite : "No peuple"}</div>
                   <div className="text-lg mt-1 text-gray-500 align-left w-100">{item.destination ? item.destination : "No destination"}</div>
                   <a
                     href={item.link}
