@@ -5,9 +5,11 @@ import "leaflet/dist/leaflet.css";
 import L from 'leaflet';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
-import { ArrowTopRightOnSquareIcon } from '@heroicons/react/20/solid';
+import { ArrowTopRightOnSquareIcon, MapPinIcon, StarIcon } from '@heroicons/react/20/solid';
 import selectedMarker from './marker-iconred.png';
 import MarkerClusterGroup from "react-leaflet-markercluster";
+import Image from "next/image";
+import SpinnerImage from "@/components/SpinnerImage";
 // import 'react-leaflet-markercluster/styles'
 
 const defaultIcon = L.icon({
@@ -51,19 +53,36 @@ const MapComponent = ({ markers }) => {
               }}
             >
               <Popup>
-                <div className="flex flex-col items-center w-100 max-w-[300px] p-2">
-                  <h3 className="text-xl font-semibold ">{item.peuple ? item.peuple : "No peuple"}</h3>
-                  <div className="text-lg mt-1 text-gray-700 align-left w-100">{item.celebrite ? item.celebrite : "No peuple"}</div>
-                  <div className="text-lg mt-1 text-gray-500 align-left w-100">{item.destination ? item.destination : "No destination"}</div>
-                  <a
-                    href={item.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block px-4 py-2 mt-2 rounded hover:bg-blue-100 transition-colors flex items-center justify-between w-[160px]"
-                  >
-                    <div className="text-lg">Watch video</div>
-                    <ArrowTopRightOnSquareIcon width={20} height={20} className="ml-1" />
-                  </a>
+                <div className="flex flex-col justify-center w-100 max-w-[300px] p-2">
+                {item.thumbnail && (
+                  <div className="rounded-xl mb-2 overflow-hidden">
+                  <SpinnerImage
+                    src={item.thumbnail}
+                    alt={`Thumbnail for marker ${i}`}
+                    width={290}
+                    height={150}
+                    // className="rounded-xl"
+                    />
+                    </div>
+                )}
+                  <h3 className="text-xl font-semibold  w-full mb-1">{item.peuple ? "Les " + item.peuple : "No celebrite"}</h3>
+                  <div className="text-lg mt-1 text-gray-700 align-left flex flex-row w-full items-center">
+                    <MapPinIcon width={20} height={20} className="mr-2 text-red-600" />
+                    {item.destination ? item.destination : "No destination"}</div>
+                  <div className="text-lg mt-0 text-gray-700 align-left flex flex-row w-full items-center">
+                    <StarIcon width={20} height={20} className="mr-2 text-blue-500" />
+                    {item.celebrite ? item.celebrite : "No celebrite"}</div>
+                  {item.link &&
+                    <a
+                      href={item.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className=" px-4 py-2 mt-2 rounded hover:bg-blue-100  transition-colors flex flex-row items-center justify-center "
+                    >
+                      <div className="text-blue-500 text-lg">Watch video</div>
+                      <ArrowTopRightOnSquareIcon width={20} height={20} className="ml-2 text-blue-500" />
+                    </a>
+                  }
                 </div>
               </Popup>
             </Marker>
