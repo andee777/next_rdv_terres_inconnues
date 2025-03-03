@@ -37,7 +37,7 @@ const SpinnerImage = ({ src, alt, width, height, className }) => {
       style={{ width: width, height: height }}
     >
       {loading && (
-        <div className="inset-0 flex items-center justify-center bg-gray-100">
+        <div className="flex items-center justify-center bg-gray-100 w-full h-full">
           <Spinner />
         </div>
       )}
