@@ -8,7 +8,6 @@ import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import { ArrowTopRightOnSquareIcon, MapPinIcon, StarIcon } from '@heroicons/react/20/solid';
 import selectedMarker from './marker-iconred.png';
 import MarkerClusterGroup from "react-leaflet-markercluster";
-import Image from "next/image";
 import SpinnerImage from "@/components/SpinnerImage";
 // import 'react-leaflet-markercluster/styles'
 
