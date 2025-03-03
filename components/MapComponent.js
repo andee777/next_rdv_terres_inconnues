@@ -5,7 +5,7 @@ import "leaflet/dist/leaflet.css";
 import L from 'leaflet';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
-import { ArrowTopRightOnSquareIcon, MapPinIcon, StarIcon } from '@heroicons/react/20/solid';
+import { ArrowTopRightOnSquareIcon, CalendarDateRangeIcon, MapPinIcon, StarIcon } from '@heroicons/react/20/solid';
 import selectedMarker from './marker-iconred.png';
 import MarkerClusterGroup from "react-leaflet-markercluster";
 import SpinnerImage from "@/components/SpinnerImage";
@@ -71,6 +71,9 @@ const MapComponent = ({ markers }) => {
                   <div className="text-lg mt-0 text-gray-700 align-left flex flex-row w-full items-center">
                     <StarIcon width={20} height={20} className="mr-2 text-blue-500" />
                     {item.celebrite ? item.celebrite : "No celebrite"}</div>
+                  <div className="text-lg mt-0 text-gray-600 align-left flex flex-row w-full items-center">
+                    <CalendarDateRangeIcon width={20} height={20} className="mr-2 text-gray-500" />
+                    {item.diffusion_date ? item.diffusion_date : "No diffusion_date"}</div>
                   {item.link &&
                     <a
                       href={item.link}
