@@ -36,7 +36,7 @@ const MapComponent = ({ markers }) => {
   return (
     <>
 
-      <MapContainer center={[2, 15]} zoom={3.5} style={{ height: "100vh", width: "100vw" }} ref={mapRef}>
+      <MapContainer center={[6, 15]} zoom={3.5} style={{ height: "100vh", width: "100vw" }} ref={mapRef}>
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         <MarkerClusterGroup showCoverageOnHover={false} >
         {markers && markers.map((item, i) => (
