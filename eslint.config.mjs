@@ -5,6 +5,11 @@ import nextTs from "eslint-config-next/typescript";
 export default defineConfig([
   ...nextVitals,
   ...nextTs,
+  {
+    // Vendored from the shadcn CLI (it syncs state to matchMedia in an effect).
+    files: ["hooks/use-mobile.ts"],
+    rules: { "react-hooks/set-state-in-effect": "off" },
+  },
   globalIgnores([
     ".next/**",
     "out/**",

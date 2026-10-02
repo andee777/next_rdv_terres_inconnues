@@ -155,3 +155,17 @@
     @apply bg-card shadow-none ring-1 ring-foreground/10;
   }
 }
+
+/* Hovering an episode in the sidebar highlights its marker (or cluster) on the map. */
+@layer components {
+  .episode-marker-hover {
+    filter: drop-shadow(
+        0 0 6px color-mix(in oklch, var(--primary) 70%, transparent)
+      )
+      brightness(1.15);
+  }
+
+  .marker-cluster.episode-marker-hover > div {
+    box-shadow: 0 0 0 3px var(--primary);
+  }
+}

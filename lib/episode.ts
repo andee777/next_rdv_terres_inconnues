@@ -15,6 +15,8 @@ export type Episode = {
   peuple: string;
   /** Place name. */
   destination: string;
+  /** Country where the episode was filmed, in French (e.g. "Mongolie"). */
+  country: string;
   /** Free-form French date, e.g. "1er septembre 2009". */
   diffusion_date: string;
   /** Broadcaster. */

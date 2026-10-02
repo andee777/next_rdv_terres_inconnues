@@ -1,0 +1,235 @@
+"use client";
+
+import { Compass, Dices, SearchX } from "lucide-react";
+import { useRef } from "react";
+
+import { Button } from "@/components/ui/button";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import { Kbd, KbdGroup } from "@/components/ui/kbd";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarRail,
+  SidebarSeparator,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import type { EpisodeFilters, SortOrder, YearGroup } from "@/lib/episode-utils";
+
+import { EpisodeListItem } from "./episode-list-item";
+import { FiltersPanel } from "./filters-panel";
+import { ThemeToggle } from "./theme-toggle";
+import { WatchProgress } from "./watch-progress";
+
+type EpisodeSidebarProps = {
+  totalCount: number;
+  countryCount: number;
+  resultCount: number;
+  groups: readonly YearGroup[];
+  filters: EpisodeFilters;
+  onFiltersChange: (changes: Partial<EpisodeFilters>) => void;
+  onFiltersReset: () => void;
+  isFiltered: boolean;
+  hosts: readonly string[];
+  sort: SortOrder;
+  onSortChange: (sort: SortOrder) => void;
+  watched: ReadonlySet<number>;
+  onToggleWatched: (episode: number) => void;
+  onResetWatched: () => void;
+  selectedEpisode: number | null;
+  onSelectEpisode: (episode: number) => void;
+  onHoverEpisode: (episode: number | null) => void;
+  onSurprise: () => void;
+  searchRef: React.RefObject<HTMLInputElement | null>;
+};
+
+const ITEM_SELECTOR = "[data-sidebar=menu-button]";
+
+export function EpisodeSidebar({
+  totalCount,
+  countryCount,
+  resultCount,
+  groups,
+  filters,
+  onFiltersChange,
+  onFiltersReset,
+  isFiltered,
+  hosts,
+  sort,
+  onSortChange,
+  watched,
+  onToggleWatched,
+  onResetWatched,
+  selectedEpisode,
+  onSelectEpisode,
+  onHoverEpisode,
+  onSurprise,
+  searchRef,
+}: EpisodeSidebarProps) {
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const items = () =>
+    Array.from(
+      listRef.current?.querySelectorAll<HTMLElement>(ITEM_SELECTOR) ?? [],
+    );
+
+  // Arrow keys move through the list; ArrowUp on the first row returns to search.
+  const handleListKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+    const all = items();
+    const index = all.indexOf(document.activeElement as HTMLElement);
+    if (index === -1) return;
+    event.preventDefault();
+    if (event.key === "ArrowUp" && index === 0) searchRef.current?.focus();
+    else all[index + (event.key === "ArrowDown" ? 1 : -1)]?.focus();
+  };
+
+  return (
+    <Sidebar
+      variant="floating"
+      collapsible="offcanvas"
+      className="p-3 [&_[data-slot=sidebar-inner]]:rounded-2xl! [&_[data-slot=sidebar-inner]]:bg-sidebar/90! [&_[data-slot=sidebar-inner]]:shadow-2xl! [&_[data-slot=sidebar-inner]]:backdrop-blur-xl!"
+    >
+      <SidebarHeader className="gap-3 p-4 pb-3">
+        <div className="flex items-center gap-3">
+          <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+            <Compass className="size-5" aria-hidden />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h1 className="font-heading text-[15px] leading-tight font-semibold tracking-tight text-balance">
+              Rendez-vous en terre inconnue
+            </h1>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Episode map · {countryCount} countries
+            </p>
+          </div>
+          <SidebarTrigger />
+        </div>
+
+        <WatchProgress
+          watched={watched.size}
+          total={totalCount}
+          onReset={onResetWatched}
+        />
+
+        <FiltersPanel
+          filters={filters}
+          onChange={onFiltersChange}
+          onReset={onFiltersReset}
+          isFiltered={isFiltered}
+          hosts={hosts}
+          sort={sort}
+          onSortChange={onSortChange}
+          resultCount={resultCount}
+          totalCount={totalCount}
+          searchRef={searchRef}
+          onArrowDown={() => items()[0]?.focus()}
+        />
+      </SidebarHeader>
+
+      <SidebarSeparator className="mx-0" />
+
+      <SidebarContent
+        ref={listRef}
+        onKeyDown={handleListKeyDown}
+        aria-label="Episodes"
+        className="[scrollbar-width:thin]! [scrollbar-color:var(--border)_transparent]"
+      >
+        {groups.length === 0 ? (
+          <Empty className="m-4 border">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <SearchX />
+              </EmptyMedia>
+              <EmptyTitle>No episodes found</EmptyTitle>
+              <EmptyDescription>
+                Try another name, place or country, or loosen the filters.
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button variant="outline" size="sm" onClick={onFiltersReset}>
+                Clear filters
+              </Button>
+            </EmptyContent>
+          </Empty>
+        ) : (
+          groups.map((group) => (
+            <SidebarGroup key={group.year ?? "undated"} className="p-0">
+              <SidebarGroupLabel className="sticky top-0 z-10 h-8 rounded-none bg-sidebar/80 px-4 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase backdrop-blur-md">
+                {group.year ?? "Undated"}
+                <span className="ml-auto font-normal tabular-nums">
+                  {group.episodes.length}
+                </span>
+              </SidebarGroupLabel>
+              <SidebarGroupContent className="px-2 pb-1">
+                <SidebarMenu>
+                  {group.episodes.map((episode) => (
+                    <EpisodeListItem
+                      key={episode.episode}
+                      episode={episode}
+                      query={filters.query}
+                      selected={episode.episode === selectedEpisode}
+                      watched={watched.has(episode.episode)}
+                      onSelect={onSelectEpisode}
+                      onToggleWatched={onToggleWatched}
+                      onHover={onHoverEpisode}
+                    />
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ))
+        )}
+      </SidebarContent>
+
+      <SidebarSeparator className="mx-0" />
+
+      <SidebarFooter className="gap-2.5 p-3">
+        <div className="flex items-center gap-2">
+          <Button
+            className="flex-1"
+            onClick={onSurprise}
+            disabled={resultCount === 0}
+          >
+            <Dices />
+            Surprise me
+          </Button>
+          <ThemeToggle />
+        </div>
+        <p className="hidden items-center justify-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground md:flex md:flex-wrap">
+          <span className="flex items-center gap-1">
+            <Kbd>/</Kbd> search
+          </span>
+          <span className="flex items-center gap-1">
+            <KbdGroup>
+              <Kbd>↑</Kbd>
+              <Kbd>↓</Kbd>
+            </KbdGroup>
+            browse
+          </span>
+          <span className="flex items-center gap-1">
+            <KbdGroup>
+              <Kbd>Ctrl</Kbd>
+              <Kbd>B</Kbd>
+            </KbdGroup>
+            sidebar
+          </span>
+        </p>
+      </SidebarFooter>
+
+      <SidebarRail />
+    </Sidebar>
+  );
+}

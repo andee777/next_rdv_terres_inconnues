@@ -18,8 +18,19 @@ Everything shared across coding agents (commands, architecture, data model, gotc
 
 1. `pnpm lint`, `pnpm format:check`, `pnpm typecheck`, `pnpm test` for quick feedback.
 2. `pnpm build` before calling the work done (needs internet for Google Fonts).
-3. For anything visible, start the `dev` server with the preview tools (`.claude/launch.json` exists, and `autoPort` is on because port 3000 is often taken by another process; never kill that process) and look at the map in the built-in browser. Check that markers render, a cluster expands on click, a popup opens with its thumbnail, the close button works, and the clicked marker turns red. To see dark mode, emulate the color scheme and **reload** (next-themes reads the system preference at startup).
-4. `read_console_messages` accumulates across reloads; judge a fix by what happens after the latest reload, not by old entries. Filter with `pattern` and a small `limit`, because Leaflet stack traces are huge.
+3. For anything visible, start the `dev` server with the preview tools (`.claude/launch.json` exists, and `autoPort` is on because port 3000 is often taken by another process; never kill that process) and exercise it in the built-in browser. The checklist is under "Always" in `AGENTS.md`. To see dark mode, emulate the color scheme and **reload** (next-themes reads the system preference at startup).
+4. Stop the preview server when done, and clear any test data you created in the pane (for example `localStorage.removeItem("rdv-terres-inconnues:watched")`).
+
+### Browser-pane testing tips
+
+These cost real time to discover:
+
+- **Animations only advance when the pane paints.** Leaflet's `flyTo`, popup fade-ins and the sidebar slide appear stuck until a frame is rendered, so state read straight after a click can look wrong (popup missing, `visibility: hidden`). Take a screenshot (after a short `wait`) before reading state, and re-check after.
+- **Real clicks and DOM `.click()` are not equivalent.** `element.click()` skips hit-testing and the pointer sequence, so it hid the "popup closes on mousedown" bug. Use real `computer` clicks for anything interactive, and when one misbehaves, log pointer events in the capture phase and compare `document.elementFromPoint(...)` with the element you expect.
+- **Screenshot coordinates are scaled.** A 1280×720 viewport is reported as 800×450 (÷1.6). Convert `getBoundingClientRect()` values before clicking.
+- **Mobile emulation scales real clicks too**, so taps on rows inside the sheet can land on a neighboring element. Verify the mobile flow with DOM `.click()` and screenshots, and reset the viewport to `desktop` when finished.
+- **The console buffer is capped (~500) and accumulates across reloads.** For "how many times did X happen", count in the page (`window.__counter`) and read it with `javascript_tool`; otherwise filter `read_console_messages` with `pattern` and a small `limit`. Leaflet stack traces are enormous.
+- **Port 3000 is often occupied** by a process you didn't start; `autoPort` picks another.
 
 ## Environment notes (Windows)
 

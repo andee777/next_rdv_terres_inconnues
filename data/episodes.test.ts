@@ -14,6 +14,13 @@ describe("episodes data", () => {
     expect(new Set(numbers).size).toBe(numbers.length);
   });
 
+  it("names the country and the host of every episode", () => {
+    for (const { episode, country, animateur } of episodes) {
+      expect(country.trim(), `episode ${episode} country`).not.toBe("");
+      expect(animateur.trim(), `episode ${episode} host`).not.toBe("");
+    }
+  });
+
   it("has coordinates ordered [lat, lng] and within range", () => {
     for (const { episode, coordinates } of episodes) {
       const [lat, lng] = coordinates;

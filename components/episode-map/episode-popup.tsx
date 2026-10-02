@@ -3,6 +3,8 @@
 import Image from "next/image";
 import {
   CalendarDays,
+  Circle,
+  CircleCheck,
   Clock,
   ExternalLink,
   MapPin,
@@ -24,19 +26,25 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Episode } from "@/lib/episode";
+import { episodeTitle } from "@/lib/episode-utils";
+import { useWatched } from "@/lib/use-watched";
 import { cn } from "@/lib/utils";
 
 const POPUP_WIDTH = 288;
 
 export function EpisodePopup({ episode }: { episode: Episode }) {
   const map = useMap();
+  const { watched, toggle } = useWatched();
+  const isWatched = watched.has(episode.episode);
 
-  const title = episode.peuple ? `Les ${episode.peuple}` : episode.destination;
+  const title = episodeTitle(episode);
   const details = [
     {
-      label: "Destination",
-      // Already the title when there is no people to name.
-      value: episode.peuple ? episode.destination : "",
+      label: "Location",
+      // The destination is already the title when there is no people to name.
+      value: [episode.peuple ? episode.destination : "", episode.country]
+        .filter(Boolean)
+        .join(", "),
       Icon: MapPin,
     },
     { label: "Celebrity", value: episode.celebrite, Icon: Star },
@@ -51,6 +59,8 @@ export function EpisodePopup({ episode }: { episode: Episode }) {
     <Popup
       className="episode-popup"
       closeButton={false}
+      // Panning is handled by the map bridge, which knows about the sidebar.
+      autoPan={false}
       minWidth={POPUP_WIDTH}
       maxWidth={POPUP_WIDTH}
     >
@@ -108,10 +118,10 @@ export function EpisodePopup({ episode }: { episode: Episode }) {
             ))}
           </ul>
         </CardContent>
-        {episode.link && (
-          <CardFooter>
+        <CardFooter className="gap-2">
+          {episode.link && (
             <Button
-              className="w-full"
+              className="flex-1"
               nativeButton={false}
               render={
                 <a
@@ -124,8 +134,20 @@ export function EpisodePopup({ episode }: { episode: Episode }) {
               Watch video
               <ExternalLink data-icon="inline-end" />
             </Button>
-          </CardFooter>
-        )}
+          )}
+          <Button
+            variant={episode.link ? "outline" : "secondary"}
+            size={episode.link ? "icon" : "default"}
+            className={episode.link ? undefined : "w-full"}
+            aria-pressed={isWatched}
+            aria-label={isWatched ? "Mark as not watched" : "Mark as watched"}
+            title={isWatched ? "Mark as not watched" : "Mark as watched"}
+            onClick={() => toggle(episode.episode)}
+          >
+            {isWatched ? <CircleCheck className="text-primary" /> : <Circle />}
+            {!episode.link && (isWatched ? "Watched" : "Mark as watched")}
+          </Button>
+        </CardFooter>
       </Card>
     </Popup>
   );

@@ -5,5 +5,6 @@ node_modules
 pnpm-lock.yaml
 next-env.d.ts
 
-# shadcn components are owned by the shadcn CLI; keep them byte-for-byte upstream
+# shadcn files are owned by the shadcn CLI; keep them byte-for-byte upstream
 components/ui
+hooks/use-mobile.ts

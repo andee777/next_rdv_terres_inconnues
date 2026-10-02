@@ -3,7 +3,8 @@
 import dynamic from "next/dynamic";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Episode } from "@/lib/episode";
+
+import type { EpisodeMapProps } from "./types";
 
 // Leaflet reads `window` when it is imported, so the map can only load in the
 // browser. `ssr: false` is only allowed inside a Client Component.
@@ -18,6 +19,6 @@ const MapView = dynamic(() => import("./map-view"), {
   ),
 });
 
-export function EpisodeMap({ episodes }: { episodes: readonly Episode[] }) {
-  return <MapView episodes={episodes} />;
+export function EpisodeMap(props: EpisodeMapProps) {
+  return <MapView {...props} />;
 }
