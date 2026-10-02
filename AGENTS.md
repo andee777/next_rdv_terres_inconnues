@@ -27,7 +27,7 @@ Run `pnpm lint`, `pnpm format:check`, `pnpm typecheck`, `pnpm test` and `pnpm bu
 
 ## Stack
 
-Next.js 16.3 (App Router, Turbopack for dev **and** build) · React 19.3 · TypeScript 6.0 (strict, no JS) · Tailwind CSS 4 (`@tailwindcss/postcss`, no `tailwind.config`) · shadcn/ui `base-nova` style on **Base UI** (not Radix) · lucide-react · next-themes · Leaflet 1.9 + react-leaflet 5 + react-leaflet-cluster 4 · ESLint 9 (flat config) · Prettier 3 + `prettier-plugin-tailwindcss` · Vitest 5.
+Next.js 16.3 (App Router, Turbopack for dev **and** build) · React 19.3 · TypeScript 6.0 (maximum strictness, no app JS) · Tailwind CSS 4 (`@tailwindcss/postcss`, no `tailwind.config`) · shadcn/ui `base-nova` style on **Base UI** (not Radix) · lucide-react · next-themes · Leaflet 1.9 + react-leaflet 5 + react-leaflet-cluster 4 · ESLint 9 (flat config) · Prettier 3 + `prettier-plugin-tailwindcss` · Vitest 5.
 
 Look up the docs for these exact versions before using an API from memory. Next 16, React 19, Tailwind 4, Base UI and react-leaflet 5 differ from their predecessors in ways that matter (for example, `next lint` no longer exists; ESLint is run directly).
 
@@ -81,35 +81,37 @@ The layout has three regimes, defined once in `lib/viewport.ts` (`COMPACT_QUERY`
 
 ## Repository map
 
-| Path                                          | Role                                                                                                                                            |
-| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `app/page.tsx`                                | Home page, a **Server Component**. Renders `<EpisodeExplorer episodes={episodes} />`.                                                           |
-| `app/layout.tsx`                              | Root layout: Geist font (`--font-sans`), `ThemeProvider`, `TooltipProvider`, `metadata`.                                                        |
-| `app/globals.css`                             | Tailwind + shadcn theme tokens, layered Leaflet CSS, `.episode-popup` and `.episode-marker-hover` rules.                                        |
-| `components/explorer/episode-explorer.tsx`    | Top-level client component: state, selection, deep links, hotkeys, map framing, `getInsets`.                                                    |
-| `components/explorer/episode-sidebar.tsx`     | The shadcn `Sidebar` (floating, offcanvas): header, filters, year-grouped list, footer, arrow-key navigation.                                   |
-| `components/explorer/episode-list-item.tsx`   | One list row: thumbnail, search-match highlighting, hover/focus → `hovered`.                                                                    |
-| `components/explorer/filters-panel.tsx`       | Search field, result count, sort menu.                                                                                                          |
-| `components/explorer/map-controls.tsx`        | Zoom and fit buttons (replace Leaflet's default control).                                                                                       |
-| `components/explorer/sidebar-open-button.tsx` | Floating "Episodes" pill, visible when the sidebar is collapsed or on mobile.                                                                   |
-| `components/explorer/theme-toggle.tsx`        | Light / dark / system menu.                                                                                                                     |
-| `components/explorer/use-episode-filters.ts`  | Filter and sort state; derives `results`, year `groups`, and `filtersKey`.                                                                      |
-| `components/episode-map/episode-map.tsx`      | Client wrapper: `dynamic(() => import("./map-view"), { ssr: false })` with a Skeleton fallback.                                                 |
-| `components/episode-map/map-view.tsx`         | `MapContainer`, OSM `TileLayer`, `MarkerClusterGroup`, `EpisodeMarker`, and `MapBridge` (the imperative API).                                   |
-| `components/episode-map/episode-popup.tsx`    | Popup content built from shadcn `Card`, `Badge`, `Button`, `AspectRatio`, `Skeleton`, "Watch video" link.                                       |
-| `components/episode-map/types.ts`             | `EpisodeMapApi`, `EpisodeMapProps`, `MapInsets`.                                                                                                |
-| `components/episode-map/marker-icons.ts`      | `defaultIcon` / `selectedIcon`.                                                                                                                 |
-| `components/ui/*`                             | shadcn components. **Owned by the shadcn CLI**; see below.                                                                                      |
-| `components/theme-provider.tsx`               | `next-themes` wrapper (`attribute="class"`, system default).                                                                                    |
-| `data/episodes.ts`                            | `export const episodes: Episode[]`, the only data source.                                                                                       |
-| `data/episodes.test.ts`, `lib/*.test.ts`      | Data integrity tests; unit tests for search/filter/sort/group/highlight.                                                                        |
-| `lib/episode.ts`                              | `Episode` and `Coordinates` types.                                                                                                              |
-| `lib/episode-utils.ts`                        | Pure functions: `episodeTitle`, `episodeYear`, `normalize`, `matchesQuery`, `filterEpisodes`, `sortEpisodes`, `groupByYear`, `highlightRanges`. |
-| `lib/viewport.ts`, `lib/viewport.test.ts`     | Responsive thresholds shared with CSS, `popupLayout()` (popup width and orientation), `useViewportSize()`.                                      |
-| `hooks/use-mobile.ts`                         | `useIsMobile()`: **customized** from shadcn's to use `COMPACT_QUERY` (see Responsive modes).                                                    |
-| `lib/utils.ts`                                | `export { cn } from "cn"` (shadcn's class-name helper package).                                                                                 |
-| `components.json`                             | shadcn config (`base-nova`, `lucide`, aliases).                                                                                                 |
-| `next.config.ts`                              | `images.remotePatterns` for `i.ytimg.com`.                                                                                                      |
+| Path                                          | Role                                                                                                                                                           |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `app/page.tsx`                                | Home page, a **Server Component**. Renders `<EpisodeExplorer episodes={episodes} />`.                                                                          |
+| `app/layout.tsx`                              | Root layout: Geist font (`--font-sans`), `ThemeProvider`, `TooltipProvider`, `metadata`.                                                                       |
+| `app/globals.css`                             | Tailwind + shadcn theme tokens, layered Leaflet CSS, `.episode-popup` and `.episode-marker-hover` rules.                                                       |
+| `components/explorer/episode-explorer.tsx`    | Top-level client component: state, selection, deep links, hotkeys, map framing, `getInsets`.                                                                   |
+| `components/explorer/episode-sidebar.tsx`     | The shadcn `Sidebar` (floating, offcanvas): header, filters, year-grouped list, footer, arrow-key navigation.                                                  |
+| `components/explorer/episode-list-item.tsx`   | One list row: thumbnail, search-match highlighting, hover/focus → `hovered`.                                                                                   |
+| `components/explorer/filters-panel.tsx`       | Search field, result count, sort menu.                                                                                                                         |
+| `components/explorer/map-controls.tsx`        | Zoom and fit buttons (replace Leaflet's default control).                                                                                                      |
+| `components/explorer/sidebar-open-button.tsx` | Floating "Episodes" pill, visible when the sidebar is collapsed or on mobile.                                                                                  |
+| `components/explorer/theme-toggle.tsx`        | Light / dark / system menu.                                                                                                                                    |
+| `components/explorer/use-episode-filters.ts`  | Filter and sort state; derives `results`, year `groups`, and `filtersKey`.                                                                                     |
+| `components/episode-map/episode-map.tsx`      | Client wrapper: `dynamic(() => import("./map-view"), { ssr: false })` with a Skeleton fallback.                                                                |
+| `components/episode-map/map-view.tsx`         | `MapContainer`, OSM `TileLayer`, `MarkerClusterGroup`, `EpisodeMarker`, and `MapBridge` (the imperative API).                                                  |
+| `components/episode-map/episode-popup.tsx`    | Popup content built from shadcn `Card`, `Badge`, `Button`, `AspectRatio`, `Skeleton`, "Watch video" link.                                                      |
+| `components/episode-map/types.ts`             | `EpisodeMapApi`, `EpisodeMapProps`, `MapInsets`.                                                                                                               |
+| `components/episode-map/marker-icons.ts`      | `defaultIcon` / `selectedIcon`.                                                                                                                                |
+| `components/ui/*`                             | shadcn components. **Owned by the shadcn CLI**; see below.                                                                                                     |
+| `components/theme-provider.tsx`               | `next-themes` wrapper (`attribute="class"`, system default).                                                                                                   |
+| `data/episodes.ts`                            | `export const episodes: readonly Episode[]`, the only data source.                                                                                             |
+| `data/episodes.test.ts`, `lib/*.test.ts`      | Data integrity tests; unit tests for search/filter/sort/group/highlight.                                                                                       |
+| `lib/episode.ts`                              | `Episode`, `Coordinates`, `YouTubeLink` and `ThumbnailUrl` types.                                                                                              |
+| `lib/episode.test-d.ts`                       | Compile-time type tests (`expectTypeOf`, `@ts-expect-error`), checked by `pnpm typecheck`; never executed.                                                     |
+| `types/react-css.d.ts`                        | Lets `style` props take CSS custom properties (`"--sidebar-width"`) without a cast.                                                                            |
+| `lib/episode-utils.ts`                        | Pure functions: `episodeTitle`, `episodeYear`, `normalize`, `matchesQuery`, `filterEpisodes`, `sortEpisodes`, `isSortOrder`, `groupByYear`, `highlightRanges`. |
+| `lib/viewport.ts`, `lib/viewport.test.ts`     | Responsive thresholds shared with CSS, `popupLayout()` (popup width and orientation), `useViewportSize()`.                                                     |
+| `hooks/use-mobile.ts`                         | `useIsMobile()`: **customized** from shadcn's to use `COMPACT_QUERY` (see Responsive modes).                                                                   |
+| `lib/utils.ts`                                | `export { cn } from "cn"` (shadcn's class-name helper package).                                                                                                |
+| `components.json`                             | shadcn config (`base-nova`, `lucide`, aliases).                                                                                                                |
+| `next.config.ts`                              | `images.remotePatterns` for `i.ytimg.com`.                                                                                                                     |
 
 ### Where to make common changes
 
@@ -136,9 +138,13 @@ The layout has three regimes, defined once in `lib/viewport.ts` (`COMPACT_QUERY`
 ```
 episode: number
 animateur, celebrite, peuple, destination, country, diffusion_date,
-channel, link, thumbnail, duration, views: string
-coordinates: [lat: number, lng: number]
+channel, duration, views: string
+coordinates: readonly [lat: number, lng: number]
+link: YouTubeLink           "" | `https://www.youtube.com/watch?v=${string}`
+thumbnail: ThumbnailUrl     "" | `https://i.ytimg.com/vi/${string}`
 ```
+
+Every field is `readonly` (`Episode` is `Readonly<{…}>`), and the dataset is a `readonly Episode[]`. Nothing may mutate episode data.
 
 Rules when editing data:
 
@@ -146,7 +152,7 @@ Rules when editing data:
 - Use `""` for unknown values; don't omit keys or use `null`.
 - `country` is the country where the episode was filmed, in French (`"Mongolie"`, `"Éthiopie"`). It feeds search and the header's country count; keep spellings consistent so the count stays right.
 - `diffusion_date` is free-form French text (`"1er septembre 2009"`), not an ISO date. Don't "normalize" it without being asked. The sidebar parses the year from it (`episodeYear`); a missing year puts the episode in an "Undated" group.
-- `link` must be `https://www.youtube.com/watch?v=<11 chars>`; `thumbnail` must be on a host allowed in `next.config.ts`. `https://i.ytimg.com/vi/<VIDEO_ID>/hqdefault.jpg` works; older entries carry long `?sqp=...&rs=...` URLs. `pnpm test` checks both.
+- `link` must be `https://www.youtube.com/watch?v=<11 chars>`; `thumbnail` must be on a host allowed in `next.config.ts`. `https://i.ytimg.com/vi/<VIDEO_ID>/hqdefault.jpg` works; older entries carry long `?sqp=...&rs=...` URLs. The compiler rejects a link or thumbnail with the wrong prefix; `pnpm test` also checks the 11-character id and that the thumbnail host is allowed.
 - Prefer links to the **full episode** on the official channel "Rendez-vous en terre inconnue - France Télévisions". Old uploads there have been made private before, so a link can silently die; verify a new link actually plays.
 - Field names are French and are a public contract. Renaming or removing them is a breaking change; ask first.
 - Data is French; keep names, places and dates in their original French spelling.
@@ -155,7 +161,15 @@ Rules when editing data:
 
 ## Conventions
 
-- Everything is TypeScript with strict mode. Don't add `.js` files.
+- Everything is TypeScript. Don't add `.js` files. The only JavaScript left is `eslint.config.mjs` and `postcss.config.mjs`: Next doesn't read a TypeScript PostCSS config, and on Node 22.14 a TypeScript `eslint.config.ts` needs the extra `jiti` dependency.
+- `tsconfig.json` goes well beyond `strict`: `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noPropertyAccessFromIndexSignature`, `noImplicitOverride`, `noImplicitReturns`, `noUnused*`, `verbatimModuleSyntax` and `erasableSyntaxOnly`. Fix the code, not the config, when one of them complains. `erasableSyntaxOnly` means no `enum`, `namespace` or constructor parameter properties: use union types and `as const` objects.
+- Prefer narrowing to casting. Use `instanceof` and type guards (such as `isSortOrder`), `satisfies`, annotated variables (`const options: FitBoundsOptions = …`) and `Record<Union, …>` so adding a union member is a compile error until it's handled. Only `as const` is welcome in app code; `components/ui` keeps shadcn's own casts. Banned by lint: `any`, `!` non-null assertions, floating promises, unnecessary conditions and assertions.
+- Derive string unions from a constant (`SORT_ORDERS = [...] as const; type SortOrder = (typeof SORT_ORDERS)[number]`) so the list and the type can't drift.
+- Import types with `import type` or an inline `type` modifier (`verbatimModuleSyntax`; lint enforces it).
+- Domain types are immutable (`Readonly<…>`, `readonly T[]`). Leaflet's own types want mutable tuples, so convert (`latLng(lat, lng)`) instead of casting a read-only tuple.
+- CSS custom properties in `style` props type-check through the augmentation in `types/react-css.d.ts`; no `as CSSProperties`.
+- Lint is **type-aware** for everything except `components/ui` (see `eslint.config.mjs`). It reuses the `@typescript-eslint` plugin that `eslint-config-next` already registers, so it needed no new dependency.
+- Type-level behavior is tested in `lib/episode.test-d.ts` with `expectTypeOf` and `@ts-expect-error`. It never runs; `pnpm typecheck` checks it. Add a case there when you add a type whose point is to reject something.
 - Format with Prettier (`pnpm format`); it sorts Tailwind classes via `prettier-plugin-tailwindcss`. `components/ui` is excluded in `.prettierignore` so shadcn files stay byte-identical to upstream.
 - Use shadcn components for UI wherever one fits instead of hand-rolled markup. Icons come from `lucide-react`.
 - Style with Tailwind utilities and the shadcn theme tokens (`bg-card`, `text-muted-foreground`, ...). Don't hard-code colors; the theme supports dark mode.

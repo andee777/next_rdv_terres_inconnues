@@ -1,7 +1,8 @@
 "use client";
 
-import { latLngBounds } from "leaflet";
+import { latLng, latLngBounds } from "leaflet";
 import type {
+  FitBoundsOptions,
   LatLngTuple,
   Marker as LeafletMarker,
   MarkerClusterGroup as LeafletClusterGroup,
@@ -123,13 +124,15 @@ function MapBridge({
     const frame = (list: readonly Episode[], animate: boolean) => {
       map.invalidateSize({ animate: false });
       const insets = getInsets();
-      const bounds = latLngBounds(list.map((episode) => episode.coordinates));
-      const options = {
+      const bounds = latLngBounds(
+        list.map(({ coordinates: [lat, lng] }) => latLng(lat, lng)),
+      );
+      const options: FitBoundsOptions = {
         paddingTopLeft: [
           insets.left + FRAME_PADDING,
           insets.top + FRAME_PADDING,
-        ] as [number, number],
-        paddingBottomRight: [FRAME_PADDING, FRAME_PADDING] as [number, number],
+        ],
+        paddingBottomRight: [FRAME_PADDING, FRAME_PADDING],
         maxZoom: FOCUS_ZOOM,
       };
       if (!animate || prefersReducedMotion())

@@ -1,11 +1,17 @@
 /** `[latitude, longitude]`, latitude first. */
-export type Coordinates = [lat: number, lng: number];
+export type Coordinates = readonly [lat: number, lng: number];
+
+/** A full YouTube watch URL, or `""` when the episode has no playable video. */
+export type YouTubeLink = "" | `https://www.youtube.com/watch?v=${string}`;
+
+/** A YouTube thumbnail (the only host `next.config.ts` allows), or `""`. */
+export type ThumbnailUrl = "" | `https://i.ytimg.com/vi/${string}`;
 
 /**
  * One episode of the series. Unknown values are empty strings, never omitted.
  * Field names are French on purpose: they mirror the series' own vocabulary.
  */
-export type Episode = {
+export type Episode = Readonly<{
   episode: number;
   /** Host of the episode. */
   animateur: string;
@@ -23,11 +29,11 @@ export type Episode = {
   channel: string;
   coordinates: Coordinates;
   /** YouTube watch URL. */
-  link: string;
+  link: YouTubeLink;
   /** Thumbnail URL; must be hosted on a domain allowed in next.config.ts. */
-  thumbnail: string;
+  thumbnail: ThumbnailUrl;
   /** Video duration, e.g. "1:29:47". */
   duration: string;
   /** View count captured when the entry was written, e.g. "109 k vues". */
   views: string;
-};
+}>;

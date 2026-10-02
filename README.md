@@ -51,7 +51,7 @@ Built to work on everything from a 320 px phone to an ultrawide monitor:
 | Area            | Choice                                                                                                                              |
 | --------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | Framework       | [Next.js](https://nextjs.org) 16 (App Router, Turbopack) with React 19                                                              |
-| Language        | TypeScript 6 (strict)                                                                                                               |
+| Language        | TypeScript 6 (maximum strictness, type-aware lint)                                                                                  |
 | UI components   | [shadcn/ui](https://ui.shadcn.com) (`base-nova` style, built on [Base UI](https://base-ui.com)), [Lucide](https://lucide.dev) icons |
 | Styling         | [Tailwind CSS](https://tailwindcss.com) 4, light/dark via `next-themes`                                                             |
 | Map             | [Leaflet](https://leafletjs.com) with [react-leaflet](https://react-leaflet.js.org) 5 and `react-leaflet-cluster`                   |
@@ -120,12 +120,15 @@ CI (`.github/workflows/ci.yml`) runs lint, format check, typecheck, tests and bu
 ├── hooks/
 │   └── use-mobile.ts               # Sheet-vs-floating sidebar switch (customized from shadcn)
 ├── lib/
-│   ├── episode.ts                  # The Episode type
+│   ├── episode.ts                  # The Episode type (immutable, typed YouTube URLs)
+│   ├── episode.test-d.ts           # Compile-time type tests, checked by `pnpm typecheck`
 │   ├── episode-utils.ts            # Search, filter, sort, group, highlight (pure functions)
 │   ├── episode-utils.test.ts
 │   ├── viewport.ts                 # Responsive thresholds, popup sizing, viewport hook
 │   ├── viewport.test.ts
 │   └── utils.ts                    # cn() helper
+├── types/
+│   └── react-css.d.ts              # Typed CSS custom properties in `style` props
 ├── components.json                 # shadcn configuration
 └── next.config.ts                  # Allows remote thumbnails from i.ytimg.com
 ```
@@ -145,8 +148,8 @@ All content lives in [`data/episodes.ts`](data/episodes.ts), a typed array of ep
 | `diffusion_date` | string       | Broadcast date as free text in French, e.g. `"26 décembre 2004"` (empty if unknown) |
 | `channel`        | string       | Broadcaster (often empty)                                                           |
 | `coordinates`    | `[lat, lng]` | Latitude first, then longitude                                                      |
-| `link`           | string       | YouTube URL (empty if none)                                                         |
-| `thumbnail`      | string       | Thumbnail image URL (empty if none)                                                 |
+| `link`           | string       | YouTube watch URL (empty if none); other hosts don't compile                        |
+| `thumbnail`      | string       | `https://i.ytimg.com/vi/…` image URL (empty if none)                                |
 | `duration`       | string       | Video duration, e.g. `"1:29:47"`                                                    |
 | `views`          | string       | View count captured when the entry was written (not displayed)                      |
 
@@ -172,7 +175,7 @@ Append an object to the array in `data/episodes.ts`:
 },
 ```
 
-Use empty strings for unknown values and keep every field present (TypeScript enforces this). Then run `pnpm test`: it checks episode numbers are unique, coordinates are in range and ordered `[lat, lng]`, a country and host are set, links are YouTube watch URLs, and thumbnail hosts are allowed by `next.config.ts`. Search and the year groups pick the new episode up automatically.
+Use empty strings for unknown values and keep every field present (TypeScript enforces this, and rejects a link that isn't a YouTube watch URL). Then run `pnpm test`: it checks episode numbers are unique, coordinates are in range and ordered `[lat, lng]`, a country and host are set, links are YouTube watch URLs, and thumbnail hosts are allowed by `next.config.ts`. Search and the year groups pick the new episode up automatically.
 
 To show thumbnails from a host other than `i.ytimg.com`, add it to `images.remotePatterns` in [`next.config.ts`](next.config.ts).
 

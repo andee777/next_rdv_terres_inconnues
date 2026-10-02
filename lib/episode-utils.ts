@@ -1,21 +1,26 @@
 import type { Episode } from "@/lib/episode";
 
-export type SortOrder = "newest" | "oldest";
+export const SORT_ORDERS = ["newest", "oldest"] as const;
+export type SortOrder = (typeof SORT_ORDERS)[number];
 
-export type EpisodeFilters = {
+export function isSortOrder(value: unknown): value is SortOrder {
+  return SORT_ORDERS.some((order) => order === value);
+}
+
+export type EpisodeFilters = Readonly<{
   /** Free-text search across celebrity, people, place, country, host and number. */
   query: string;
-};
+}>;
 
 export const DEFAULT_FILTERS: EpisodeFilters = {
   query: "",
 };
 
-export type YearGroup = {
+export type YearGroup = Readonly<{
   /** `null` groups episodes whose broadcast year is unknown. */
   year: number | null;
-  episodes: Episode[];
-};
+  episodes: readonly Episode[];
+}>;
 
 /** Title used wherever an episode is named: "Les Wauja", or the place when no people is known. */
 export function episodeTitle(episode: Episode): string {
@@ -94,11 +99,11 @@ export function sortEpisodes(
 
 /** Groups consecutive episodes by year, keeping the input order. */
 export function groupByYear(episodes: readonly Episode[]): YearGroup[] {
-  const groups: YearGroup[] = [];
+  const groups: { year: number | null; episodes: Episode[] }[] = [];
   for (const episode of episodes) {
     const year = episodeYear(episode);
     const last = groups.at(-1);
-    if (last && last.year === year) last.episodes.push(episode);
+    if (last?.year === year) last.episodes.push(episode);
     else groups.push({ year, episodes: [episode] });
   }
   return groups;

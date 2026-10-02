@@ -17,7 +17,12 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group";
 import { Kbd } from "@/components/ui/kbd";
-import type { EpisodeFilters, SortOrder } from "@/lib/episode-utils";
+import {
+  isSortOrder,
+  SORT_ORDERS,
+  type EpisodeFilters,
+  type SortOrder,
+} from "@/lib/episode-utils";
 
 type FiltersPanelProps = {
   filters: EpisodeFilters;
@@ -33,9 +38,10 @@ type FiltersPanelProps = {
   onArrowDown: () => void;
 };
 
-const SORT_LABELS: Record<SortOrder, string> = {
-  newest: "Newest first",
-  oldest: "Oldest first",
+// `Record<SortOrder, …>` makes adding a sort order a compile error until labelled.
+const SORT_LABELS: Record<SortOrder, { short: string; full: string }> = {
+  newest: { short: "Newest", full: "Newest first" },
+  oldest: { short: "Oldest", full: "Oldest first" },
 };
 
 export function FiltersPanel({
@@ -121,24 +127,25 @@ export function FiltersPanel({
                   variant="ghost"
                   size="xs"
                   className="text-muted-foreground pointer-coarse:h-10 pointer-coarse:px-2.5"
-                  aria-label={`Sort: ${SORT_LABELS[sort]}`}
+                  aria-label={`Sort: ${SORT_LABELS[sort].full}`}
                 />
               }
             >
               <ArrowDownUp />
-              {sort === "newest" ? "Newest" : "Oldest"}
+              {SORT_LABELS[sort].short}
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuRadioGroup
                 value={sort}
-                onValueChange={(value) => onSortChange(value as SortOrder)}
+                onValueChange={(value) => {
+                  if (isSortOrder(value)) onSortChange(value);
+                }}
               >
-                <DropdownMenuRadioItem value="newest">
-                  {SORT_LABELS.newest}
-                </DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="oldest">
-                  {SORT_LABELS.oldest}
-                </DropdownMenuRadioItem>
+                {SORT_ORDERS.map((order) => (
+                  <DropdownMenuRadioItem key={order} value={order}>
+                    {SORT_LABELS[order].full}
+                  </DropdownMenuRadioItem>
+                ))}
               </DropdownMenuRadioGroup>
             </DropdownMenuContent>
           </DropdownMenu>

@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { CSSProperties } from "react";
 
 import { EpisodeMap } from "@/components/episode-map/episode-map";
 import type { EpisodeMapApi, MapInsets } from "@/components/episode-map/types";
@@ -28,9 +27,7 @@ export function EpisodeExplorer({ episodes }: EpisodeExplorerProps) {
   return (
     <SidebarProvider
       // Fluid: narrow on tablets so the map keeps room, capped at 24rem.
-      style={
-        { "--sidebar-width": "clamp(18rem, 30vw, 24rem)" } as CSSProperties
-      }
+      style={{ "--sidebar-width": "clamp(18rem, 30vw, 24rem)" }}
       className="h-dvh min-h-0 overflow-hidden"
     >
       <Explorer episodes={episodes} />
@@ -182,10 +179,11 @@ function Explorer({ episodes }: EpisodeExplorerProps) {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "/" || event.metaKey || event.ctrlKey || event.altKey)
         return;
-      const target = event.target as HTMLElement | null;
+      const { target } = event;
       if (
-        target?.isContentEditable ||
-        ["INPUT", "TEXTAREA", "SELECT"].includes(target?.tagName ?? "")
+        target instanceof HTMLElement &&
+        (target.isContentEditable ||
+          ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))
       ) {
         return;
       }

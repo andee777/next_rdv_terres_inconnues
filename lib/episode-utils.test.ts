@@ -11,6 +11,7 @@ import {
   groupByYear,
   hasActiveFilters,
   highlightRanges,
+  isSortOrder,
   matchesQuery,
   normalize,
   sortEpisodes,
@@ -128,6 +129,16 @@ describe("filterEpisodes", () => {
     const filters = { ...DEFAULT_FILTERS, query: "  " };
     expect(filterEpisodes(data, filters)).toHaveLength(3);
     expect(hasActiveFilters(filters)).toBe(false);
+  });
+});
+
+describe("isSortOrder", () => {
+  it("accepts only the known sort orders", () => {
+    expect(isSortOrder("newest")).toBe(true);
+    expect(isSortOrder("oldest")).toBe(true);
+    for (const value of ["", "Newest", "random", null, undefined, 1]) {
+      expect(isSortOrder(value), String(value)).toBe(false);
+    }
   });
 });
 

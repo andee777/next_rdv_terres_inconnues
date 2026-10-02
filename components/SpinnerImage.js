@@ -6,7 +6,7 @@ const Spinner = () => (
   <div className="spinner">
     {/* This can be a CSS spinner or any spinner component */}
     <svg
-      className="animate-spin h-8 w-8 text-gray-500"
+      className="h-8 w-8 animate-spin text-gray-500"
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"
@@ -37,7 +37,7 @@ const SpinnerImage = ({ src, alt, width, height, className }) => {
       style={{ width: width, height: height }}
     >
       {loading && (
-        <div className="flex items-center justify-center bg-gray-100 w-full h-full">
+        <div className="flex h-full w-full items-center justify-center bg-gray-100">
           <Spinner />
         </div>
       )}

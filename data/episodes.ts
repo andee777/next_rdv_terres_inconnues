@@ -1,6 +1,6 @@
 import type { Episode } from "@/lib/episode";
 
-export const episodes: Episode[] = [
+export const episodes: readonly Episode[] = [
   {
     episode: 1,
     animateur: "Frédéric Lopez",

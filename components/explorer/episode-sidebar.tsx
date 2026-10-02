@@ -80,7 +80,7 @@ export function EpisodeSidebar({
   const handleListKeyDown = (event: React.KeyboardEvent) => {
     if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
     const all = items();
-    const index = all.indexOf(document.activeElement as HTMLElement);
+    const index = all.findIndex((item) => item === document.activeElement);
     if (index === -1) return;
     event.preventDefault();
     if (event.key === "ArrowUp" && index === 0) searchRef.current?.focus();
