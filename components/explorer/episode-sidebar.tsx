@@ -41,7 +41,6 @@ type EpisodeSidebarProps = {
   onFiltersChange: (changes: Partial<EpisodeFilters>) => void;
   onFiltersReset: () => void;
   isFiltered: boolean;
-  hosts: readonly string[];
   sort: SortOrder;
   onSortChange: (sort: SortOrder) => void;
   selectedEpisode: number | null;
@@ -62,7 +61,6 @@ export function EpisodeSidebar({
   onFiltersChange,
   onFiltersReset,
   isFiltered,
-  hosts,
   sort,
   onSortChange,
   selectedEpisode,
@@ -122,7 +120,6 @@ export function EpisodeSidebar({
             onChange={onFiltersChange}
             onReset={onFiltersReset}
             isFiltered={isFiltered}
-            hosts={hosts}
             sort={sort}
             onSortChange={onSortChange}
             resultCount={resultCount}

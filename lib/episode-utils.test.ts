@@ -11,12 +11,10 @@ import {
   groupByYear,
   hasActiveFilters,
   highlightRanges,
-  hostFirstName,
   matchesQuery,
   normalize,
   sortEpisodes,
   tokenize,
-  uniqueHosts,
 } from "./episode-utils";
 
 function make(overrides: Partial<Episode> & { episode: number }): Episode {
@@ -48,7 +46,7 @@ describe("normalize / tokenize", () => {
   });
 });
 
-describe("episodeTitle / episodeYear / hostFirstName", () => {
+describe("episodeTitle / episodeYear", () => {
   it("prefixes the people with 'Les', or falls back to the destination", () => {
     expect(episodeTitle(make({ episode: 1, peuple: "Wauja" }))).toBe(
       "Les Wauja",
@@ -66,10 +64,6 @@ describe("episodeTitle / episodeYear / hostFirstName", () => {
       episodeYear(make({ episode: 1, diffusion_date: "26 décembre 2004" })),
     ).toBe(2004);
     expect(episodeYear(make({ episode: 1, diffusion_date: "" }))).toBeNull();
-  });
-
-  it("extracts a host's first name", () => {
-    expect(hostFirstName("Raphaël de Casabianca")).toBe("Raphaël");
   });
 });
 
@@ -114,13 +108,9 @@ describe("matchesQuery", () => {
 
 describe("filterEpisodes", () => {
   const data = [
-    make({
-      episode: 1,
-      animateur: "A",
-      link: "https://www.youtube.com/watch?v=aaaaaaaaaaa",
-    }),
-    make({ episode: 2, animateur: "B" }),
-    make({ episode: 3, animateur: "A" }),
+    make({ episode: 1, country: "Inde" }),
+    make({ episode: 2, country: "Mongolie" }),
+    make({ episode: 3, country: "Inde" }),
   ];
 
   it("returns everything with default filters", () => {
@@ -128,24 +118,16 @@ describe("filterEpisodes", () => {
     expect(hasActiveFilters(DEFAULT_FILTERS)).toBe(false);
   });
 
-  it("filters by host", () => {
-    const result = filterEpisodes(data, { ...DEFAULT_FILTERS, hosts: ["A"] });
-    expect(result.map((e) => e.episode)).toEqual([1, 3]);
-  });
-
-  it("keeps only episodes with a video", () => {
-    const result = filterEpisodes(data, {
-      ...DEFAULT_FILTERS,
-      onlyWithVideo: true,
-    });
-    expect(result.map((e) => e.episode)).toEqual([1]);
-  });
-
-  it("combines filters and reports them as active", () => {
-    const filters = { ...DEFAULT_FILTERS, hosts: ["A"], onlyWithVideo: true };
-    expect(filterEpisodes(data, filters).map((e) => e.episode)).toEqual([1]);
+  it("filters by the search query and reports it as active", () => {
+    const filters = { ...DEFAULT_FILTERS, query: "inde" };
+    expect(filterEpisodes(data, filters).map((e) => e.episode)).toEqual([1, 3]);
     expect(hasActiveFilters(filters)).toBe(true);
-    expect(hasActiveFilters({ ...DEFAULT_FILTERS, query: "  " })).toBe(false);
+  });
+
+  it("treats a blank query as no filter", () => {
+    const filters = { ...DEFAULT_FILTERS, query: "  " };
+    expect(filterEpisodes(data, filters)).toHaveLength(3);
+    expect(hasActiveFilters(filters)).toBe(false);
   });
 });
 
@@ -211,8 +193,7 @@ describe("real dataset", () => {
     expect(hits.every((e) => e.country === "Éthiopie")).toBe(true);
   });
 
-  it("has a handful of hosts and many countries", () => {
-    expect(uniqueHosts(episodes).length).toBeGreaterThanOrEqual(3);
+  it("covers many countries", () => {
     expect(countCountries(episodes)).toBeGreaterThan(10);
   });
 });

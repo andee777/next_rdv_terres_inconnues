@@ -17,7 +17,7 @@ An interactive world map of the episodes of _Rendez-vous en terre inconnue_, the
 **Floating sidebar**
 
 - Accent-insensitive search across celebrity, people, place, country, host and episode number, with matches highlighted
-- Filters: host and "With video"; sort newest or oldest first
+- Sort newest or oldest first
 - Episodes grouped by year with sticky headers and thumbnails
 - Selecting an episode flies the map to it (un-clustering if needed) and opens its popup; picking a marker on the map highlights and scrolls to its row. The camera accounts for the sidebar so nothing hides behind it
 - "Surprise me" picks a random episode from the current results
@@ -29,7 +29,7 @@ An interactive world map of the episodes of _Rendez-vous en terre inconnue_, the
 
 Built to work on everything from a 320 px phone to an ultrawide monitor:
 
-- **Phones (portrait):** the sidebar is a sheet sized to the screen, its filters sit behind a "Filters" button so the list gets the room, and the map opens framed on every episode
+- **Phones (portrait):** the sidebar is a sheet sized to the screen and the map opens framed on every episode
 - **Phones (landscape):** the sheet scrolls as a single page, and episode popups switch to a side-by-side layout (thumbnail beside the details) so they fit the short screen
 - **Tablets:** a narrower floating sidebar that leaves the map room
 - **Large screens:** the sidebar and popups keep a comfortable maximum size
@@ -98,9 +98,9 @@ CI (`.github/workflows/ci.yml`) runs lint, format check, typecheck, tests and bu
 ├── components/
 │   ├── explorer/                   # The floating sidebar and everything that drives the map
 │   │   ├── episode-explorer.tsx    # State, selection, deep links, hotkeys, map framing
-│   │   ├── episode-sidebar.tsx     # Sidebar layout (header, filters, list, footer)
+│   │   ├── episode-sidebar.tsx     # Sidebar layout (header, search, list, footer)
 │   │   ├── episode-list-item.tsx   # One row: thumbnail, highlighted text
-│   │   ├── filters-panel.tsx       # Search, host chips, "With video" switch, sort
+│   │   ├── filters-panel.tsx       # Search field, result count, sort menu
 │   │   ├── map-controls.tsx        # Zoom / fit buttons
 │   │   ├── sidebar-open-button.tsx # Floating pill shown when the sidebar is closed
 │   │   ├── theme-toggle.tsx
@@ -172,7 +172,7 @@ Append an object to the array in `data/episodes.ts`:
 },
 ```
 
-Use empty strings for unknown values and keep every field present (TypeScript enforces this). Then run `pnpm test`: it checks episode numbers are unique, coordinates are in range and ordered `[lat, lng]`, a country and host are set, links are YouTube watch URLs, and thumbnail hosts are allowed by `next.config.ts`. Search, the year groups and the host filter pick the new episode up automatically.
+Use empty strings for unknown values and keep every field present (TypeScript enforces this). Then run `pnpm test`: it checks episode numbers are unique, coordinates are in range and ordered `[lat, lng]`, a country and host are set, links are YouTube watch URLs, and thumbnail hosts are allowed by `next.config.ts`. Search and the year groups pick the new episode up automatically.
 
 To show thumbnails from a host other than `i.ytimg.com`, add it to `images.remotePatterns` in [`next.config.ts`](next.config.ts).
 

@@ -68,11 +68,11 @@ page.tsx (Server)  ──►  EpisodeExplorer (client)
 
 The layout has three regimes, defined once in `lib/viewport.ts` (`COMPACT_QUERY`, `SHORT_MAX_HEIGHT`, `MOBILE_MAX_WIDTH`) and mirrored by the `compact` and `short` Tailwind variants in `app/globals.css`. **Keep those numbers in sync.**
 
-| Regime                          | Trigger                            | Sidebar                                          | Notes                                                                                                                      |
-| ------------------------------- | ---------------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
-| Regular                         | width ≥ 768 and height > 560       | Floating panel, `clamp(18rem, 30vw, 24rem)` wide | All filters visible.                                                                                                       |
-| `compact`                       | width ≤ 767 **or** height ≤ 560    | Slide-over sheet (`min(88vw, 22rem)`)            | Host chips and switches sit behind a "Filters" toggle; keyboard hints hidden; map controls fade out while a popup is open. |
-| `short` (a subset of `compact`) | height ≤ 560 (phone held sideways) | Sheet, header + list + footer scroll together    | Subtitle hidden, footer pinned, popup switches to a side-by-side layout (`popupLayout`).                                   |
+| Regime                          | Trigger                            | Sidebar                                          | Notes                                                                                    |
+| ------------------------------- | ---------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| Regular                         | width ≥ 768 and height > 560       | Floating panel, `clamp(18rem, 30vw, 24rem)` wide | All filters visible.                                                                     |
+| `compact`                       | width ≤ 767 **or** height ≤ 560    | Slide-over sheet (`min(88vw, 22rem)`)            | Keyboard hints hidden; map controls fade out while a popup is open.                      |
+| `short` (a subset of `compact`) | height ≤ 560 (phone held sideways) | Sheet, header + list + footer scroll together    | Subtitle hidden, footer pinned, popup switches to a side-by-side layout (`popupLayout`). |
 
 - `hooks/use-mobile.ts` (what shadcn's `Sidebar` uses to choose sheet vs. floating) is **customized** to use `COMPACT_QUERY`, so short landscape phones get the sheet, not a 360 px panel that leaves the list 26 px tall.
 - Touch: bump targets with `pointer-coarse:` variants (≥ 40 px). Don't hide anything behind hover; touch devices can't reveal it.
@@ -89,7 +89,7 @@ The layout has three regimes, defined once in `lib/viewport.ts` (`COMPACT_QUERY`
 | `components/explorer/episode-explorer.tsx`    | Top-level client component: state, selection, deep links, hotkeys, map framing, `getInsets`.                                                    |
 | `components/explorer/episode-sidebar.tsx`     | The shadcn `Sidebar` (floating, offcanvas): header, filters, year-grouped list, footer, arrow-key navigation.                                   |
 | `components/explorer/episode-list-item.tsx`   | One list row: thumbnail, search-match highlighting, hover/focus → `hovered`.                                                                    |
-| `components/explorer/filters-panel.tsx`       | Search field, host `ToggleGroup`, "With video" switch, count, sort menu.                                                                        |
+| `components/explorer/filters-panel.tsx`       | Search field, result count, sort menu.                                                                                                          |
 | `components/explorer/map-controls.tsx`        | Zoom and fit buttons (replace Leaflet's default control).                                                                                       |
 | `components/explorer/sidebar-open-button.tsx` | Floating "Episodes" pill, visible when the sidebar is collapsed or on mobile.                                                                   |
 | `components/explorer/theme-toggle.tsx`        | Light / dark / system menu.                                                                                                                     |
@@ -150,7 +150,7 @@ Rules when editing data:
 - Prefer links to the **full episode** on the official channel "Rendez-vous en terre inconnue - France Télévisions". Old uploads there have been made private before, so a link can silently die; verify a new link actually plays.
 - Field names are French and are a public contract. Renaming or removing them is a breaking change; ask first.
 - Data is French; keep names, places and dates in their original French spelling.
-- `animateur` drives the host filter chips (first names are derived from it). `channel` and `views` are stored but not displayed; `duration` is shown as a badge.
+- `animateur` is only matched by search. `channel` and `views` are stored but not displayed; `duration` is shown as a badge.
 - Some episodes share coordinates. That is expected; the cluster group spiderfies them at max zoom.
 
 ## Conventions

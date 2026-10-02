@@ -5,15 +5,10 @@ export type SortOrder = "newest" | "oldest";
 export type EpisodeFilters = {
   /** Free-text search across celebrity, people, place, country, host and number. */
   query: string;
-  /** Selected hosts (full names). Empty means every host. */
-  hosts: readonly string[];
-  onlyWithVideo: boolean;
 };
 
 export const DEFAULT_FILTERS: EpisodeFilters = {
   query: "",
-  hosts: [],
-  onlyWithVideo: false,
 };
 
 export type YearGroup = {
@@ -31,10 +26,6 @@ export function episodeTitle(episode: Episode): string {
 export function episodeYear(episode: Episode): number | null {
   const match = episode.diffusion_date.match(/\b(\d{4})\b/);
   return match ? Number(match[1]) : null;
-}
-
-export function hostFirstName(host: string): string {
-  return host.split(" ")[0] ?? host;
 }
 
 /** Lowercases, strips diacritics and collapses whitespace, so "Éthiopie" matches "ethiopie". */
@@ -82,24 +73,14 @@ export function matchesQuery(episode: Episode, query: string): boolean {
 }
 
 export function hasActiveFilters(filters: EpisodeFilters): boolean {
-  return (
-    tokenize(filters.query).length > 0 ||
-    filters.hosts.length > 0 ||
-    filters.onlyWithVideo
-  );
+  return tokenize(filters.query).length > 0;
 }
 
 export function filterEpisodes(
   episodes: readonly Episode[],
   filters: EpisodeFilters,
 ): Episode[] {
-  return episodes.filter(
-    (episode) =>
-      matchesQuery(episode, filters.query) &&
-      (filters.hosts.length === 0 ||
-        filters.hosts.includes(episode.animateur)) &&
-      (!filters.onlyWithVideo || episode.link !== ""),
-  );
+  return episodes.filter((episode) => matchesQuery(episode, filters.query));
 }
 
 /** Episode numbers follow broadcast order, so they are the sort key. */
@@ -121,10 +102,6 @@ export function groupByYear(episodes: readonly Episode[]): YearGroup[] {
     else groups.push({ year, episodes: [episode] });
   }
   return groups;
-}
-
-export function uniqueHosts(episodes: readonly Episode[]): string[] {
-  return [...new Set(episodes.map((episode) => episode.animateur))];
 }
 
 export function countCountries(episodes: readonly Episode[]): number {

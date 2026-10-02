@@ -32,15 +32,7 @@ export function useEpisodeFilters(episodes: readonly Episode[]) {
 
   // Changes only when the user edits a filter (not the sort order), so the
   // map is only re-framed on deliberate filtering.
-  const filtersKey = useMemo(
-    () =>
-      JSON.stringify([
-        normalize(filters.query),
-        filters.hosts,
-        filters.onlyWithVideo,
-      ]),
-    [filters],
-  );
+  const filtersKey = useMemo(() => normalize(filters.query), [filters]);
 
   return {
     filters,

@@ -7,7 +7,7 @@ import { EpisodeMap } from "@/components/episode-map/episode-map";
 import type { EpisodeMapApi, MapInsets } from "@/components/episode-map/types";
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import type { Episode } from "@/lib/episode";
-import { countCountries, uniqueHosts } from "@/lib/episode-utils";
+import { countCountries } from "@/lib/episode-utils";
 
 import { EpisodeSidebar } from "./episode-sidebar";
 import { MapControls } from "./map-controls";
@@ -59,7 +59,6 @@ function Explorer({ episodes }: EpisodeExplorerProps) {
   const searchRef = useRef<HTMLInputElement>(null);
   const deepLinkHandled = useRef(false);
 
-  const hosts = useMemo(() => uniqueHosts(episodes), [episodes]);
   const countryCount = useMemo(() => countCountries(episodes), [episodes]);
 
   // Which part of the map the floating UI currently covers, in px: the open
@@ -210,7 +209,6 @@ function Explorer({ episodes }: EpisodeExplorerProps) {
         onFiltersChange={patch}
         onFiltersReset={reset}
         isFiltered={isFiltered}
-        hosts={hosts}
         sort={sort}
         onSortChange={setSort}
         selectedEpisode={selected}
