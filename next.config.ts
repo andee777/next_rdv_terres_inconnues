@@ -2,7 +2,14 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    domains: ["i.ytimg.com"],
+    // YouTube thumbnails shown in the episode popups.
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "i.ytimg.com",
+        pathname: "/vi/**",
+      },
+    ],
   },
 };
 

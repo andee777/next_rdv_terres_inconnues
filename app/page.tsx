@@ -1,12 +1,10 @@
-'use client'; // Mark this as a Client Component
-import { locations } from "../data/locations";
-import dynamic from 'next/dynamic';
-const MapComponent = dynamic(() => import('../components/MapComponent'), {ssr: false});
+import { EpisodeMap } from "@/components/episode-map/episode-map";
+import { episodes } from "@/data/episodes";
 
 export default function Home() {
   return (
-    <div>
-      <MapComponent markers={locations}/>
-    </div>
+    <main className="h-dvh w-full">
+      <EpisodeMap episodes={episodes} />
+    </main>
   );
 }
