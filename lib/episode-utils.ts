@@ -8,14 +8,12 @@ export type EpisodeFilters = {
   /** Selected hosts (full names). Empty means every host. */
   hosts: readonly string[];
   onlyWithVideo: boolean;
-  hideWatched: boolean;
 };
 
 export const DEFAULT_FILTERS: EpisodeFilters = {
   query: "",
   hosts: [],
   onlyWithVideo: false,
-  hideWatched: false,
 };
 
 export type YearGroup = {
@@ -87,23 +85,20 @@ export function hasActiveFilters(filters: EpisodeFilters): boolean {
   return (
     tokenize(filters.query).length > 0 ||
     filters.hosts.length > 0 ||
-    filters.onlyWithVideo ||
-    filters.hideWatched
+    filters.onlyWithVideo
   );
 }
 
 export function filterEpisodes(
   episodes: readonly Episode[],
   filters: EpisodeFilters,
-  watched: ReadonlySet<number>,
 ): Episode[] {
   return episodes.filter(
     (episode) =>
       matchesQuery(episode, filters.query) &&
       (filters.hosts.length === 0 ||
         filters.hosts.includes(episode.animateur)) &&
-      (!filters.onlyWithVideo || episode.link !== "") &&
-      (!filters.hideWatched || !watched.has(episode.episode)),
+      (!filters.onlyWithVideo || episode.link !== ""),
   );
 }
 

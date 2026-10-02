@@ -13,10 +13,7 @@ import {
 } from "@/lib/episode-utils";
 
 /** Search, filter and sort state, plus the derived results the UI renders. */
-export function useEpisodeFilters(
-  episodes: readonly Episode[],
-  watched: ReadonlySet<number>,
-) {
+export function useEpisodeFilters(episodes: readonly Episode[]) {
   const [filters, setFilters] = useState<EpisodeFilters>(DEFAULT_FILTERS);
   const [sort, setSort] = useState<SortOrder>("newest");
 
@@ -28,20 +25,19 @@ export function useEpisodeFilters(
   const reset = useCallback(() => setFilters(DEFAULT_FILTERS), []);
 
   const results = useMemo(
-    () => sortEpisodes(filterEpisodes(episodes, filters, watched), sort),
-    [episodes, filters, watched, sort],
+    () => sortEpisodes(filterEpisodes(episodes, filters), sort),
+    [episodes, filters, sort],
   );
   const groups = useMemo(() => groupByYear(results), [results]);
 
-  // Changes only when the user edits a filter, not when the watched set
-  // changes, so the map is only re-framed on deliberate filtering.
+  // Changes only when the user edits a filter (not the sort order), so the
+  // map is only re-framed on deliberate filtering.
   const filtersKey = useMemo(
     () =>
       JSON.stringify([
         normalize(filters.query),
         filters.hosts,
         filters.onlyWithVideo,
-        filters.hideWatched,
       ]),
     [filters],
   );

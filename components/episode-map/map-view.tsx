@@ -5,6 +5,7 @@ import type {
   LatLngTuple,
   Marker as LeafletMarker,
   MarkerClusterGroup as LeafletClusterGroup,
+  Popup as LeafletPopup,
   PopupEvent,
 } from "leaflet";
 // Type-only: loads the typings that add MarkerClusterGroup to Leaflet. TypeScript 6
@@ -26,8 +27,14 @@ type MarkerRegistry = Map<number, LeafletMarker>;
 /** Zoom level that frames a single episode without leaving it clustered. */
 const FOCUS_ZOOM = 6;
 const VIEW_MARGIN = 16;
+/** Padding around a framed set of episodes (px). */
+const FRAME_PADDING = 32;
 /** How long a new popup is watched for size changes while it settles (ms). */
 const POPUP_SETTLE_MS = 1500;
+/** Extra, fixed-time checks while a popup settles (ms after it opens). */
+const POPUP_CHECK_DELAYS_MS = [0, 120, 350, 800];
+/** Wait for a resize or rotation to finish before re-framing (ms). */
+const RESIZE_DEBOUNCE_MS = 150;
 
 const prefersReducedMotion = () =>
   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -103,10 +110,66 @@ function MapBridge({
   const map = useMap();
 
   useEffect(() => {
+    const container = map.getContainer();
+
+    // The episodes last framed with `fitEpisodes`, re-framed when the window is
+    // resized or rotated. Cleared as soon as the user moves the map themselves,
+    // so we never fight their camera.
+    let lastFit: readonly Episode[] | null = null;
+    const releaseCamera = () => {
+      lastFit = null;
+    };
+
+    const frame = (list: readonly Episode[], animate: boolean) => {
+      map.invalidateSize({ animate: false });
+      const insets = getInsets();
+      const bounds = latLngBounds(list.map((episode) => episode.coordinates));
+      const options = {
+        paddingTopLeft: [
+          insets.left + FRAME_PADDING,
+          insets.top + FRAME_PADDING,
+        ] as [number, number],
+        paddingBottomRight: [FRAME_PADDING, FRAME_PADDING] as [number, number],
+        maxZoom: FOCUS_ZOOM,
+      };
+      if (!animate || prefersReducedMotion())
+        map.fitBounds(bounds, { ...options, animate: false });
+      else map.flyToBounds(bounds, { ...options, duration: 1 });
+    };
+
+    // Pan so a popup is fully visible and clear of the sidebar and pill.
+    // Leaflet's own auto-pan is disabled on popups because it ignores overlays.
+    const adjustPopup = (element: HTMLElement) => {
+      const insets = getInsets();
+      const popup = element.getBoundingClientRect();
+      const view = container.getBoundingClientRect();
+      const safe = {
+        left: view.left + insets.left + VIEW_MARGIN,
+        top: view.top + insets.top + VIEW_MARGIN,
+        right: view.right - VIEW_MARGIN,
+        bottom: view.bottom - VIEW_MARGIN,
+      };
+
+      let dx = 0;
+      let dy = 0;
+      if (popup.left < safe.left) dx = popup.left - safe.left;
+      else if (popup.right > safe.right) dx = popup.right - safe.right;
+      if (popup.top < safe.top) dy = popup.top - safe.top;
+      else if (popup.bottom > safe.bottom) dy = popup.bottom - safe.bottom;
+
+      if (dx !== 0 || dy !== 0) {
+        map.panBy([dx, dy], {
+          animate: !prefersReducedMotion(),
+          duration: 0.35,
+        });
+      }
+    };
+
     const api: EpisodeMapApi = {
       focusEpisode(episodeNumber) {
         const marker = registry.get(episodeNumber);
         if (!marker) return;
+        releaseCamera();
 
         // Leaflet caches the container size, so re-measure before computing.
         map.invalidateSize({ animate: false });
@@ -152,92 +215,82 @@ function MapBridge({
         window.setTimeout(open, 2500); // safety net if no move event fires
       },
 
-      fitEpisodes(list) {
+      fitEpisodes(list, { animate = true } = {}) {
         if (list.length === 0) return;
-        map.invalidateSize({ animate: false });
-        const insets = getInsets();
-        const bounds = latLngBounds(list.map((episode) => episode.coordinates));
-        const options = {
-          paddingTopLeft: [insets.left + 32, insets.top + 32] as [
-            number,
-            number,
-          ],
-          paddingBottomRight: [32, 32] as [number, number],
-          maxZoom: FOCUS_ZOOM,
-        };
-        if (prefersReducedMotion())
-          map.fitBounds(bounds, { ...options, animate: false });
-        else map.flyToBounds(bounds, { ...options, duration: 1 });
+        lastFit = list;
+        frame(list, animate);
       },
 
       zoomIn: () => map.zoomIn(),
       zoomOut: () => map.zoomOut(),
     };
 
-    // Pan so a freshly opened popup is fully visible and clear of the sidebar.
-    // Leaflet's own auto-pan is disabled on popups because it ignores overlays.
-    const keepPopupInView = (event: PopupEvent) => {
+    // --- Popups ------------------------------------------------------------
+
+    let openPopup: LeafletPopup | null = null;
+    let stopSettling: (() => void) | null = null;
+
+    const onPopupOpen = (event: PopupEvent) => {
+      stopSettling?.();
+      openPopup = event.popup;
       const element = event.popup.getElement();
       if (!element) return;
-
-      const adjust = () => {
-        const insets = getInsets();
-        const popup = element.getBoundingClientRect();
-        const view = map.getContainer().getBoundingClientRect();
-        const safe = {
-          left: view.left + insets.left + VIEW_MARGIN,
-          top: view.top + insets.top + VIEW_MARGIN,
-          right: view.right - VIEW_MARGIN,
-          bottom: view.bottom - VIEW_MARGIN,
-        };
-
-        let dx = 0;
-        let dy = 0;
-        if (popup.left < safe.left) dx = popup.left - safe.left;
-        else if (popup.right > safe.right) dx = popup.right - safe.right;
-        if (popup.top < safe.top) dy = popup.top - safe.top;
-        else if (popup.bottom > safe.bottom) dy = popup.bottom - safe.bottom;
-
-        if (dx !== 0 || dy !== 0) {
-          map.panBy([dx, dy], {
-            animate: !prefersReducedMotion(),
-            duration: 0.35,
-          });
-        }
-      };
 
       // The card mounts into the popup just after the event, so the popup grows
       // (upward, above its marker) after the first measurement. Re-check on every
       // size change for a short settling window, then stop so the user's own
       // panning is never fought.
-      let frame = 0;
-      const schedule = () => {
-        window.cancelAnimationFrame(frame);
-        frame = window.requestAnimationFrame(adjust);
-      };
-      const observer = new ResizeObserver(schedule);
+      //
+      // Plain timers back up the ResizeObserver on purpose: observer callbacks
+      // and animation frames only run when the browser paints, so a throttled or
+      // background tab would otherwise never adjust. Measuring with
+      // getBoundingClientRect works without a paint.
+      const timers: number[] = [];
+      const check = () => adjustPopup(element);
+      for (const delay of POPUP_CHECK_DELAYS_MS) {
+        timers.push(window.setTimeout(check, delay));
+      }
+      const observer = new ResizeObserver(() => {
+        timers.push(window.setTimeout(check, 0));
+      });
       observer.observe(element);
+      timers.push(window.setTimeout(() => stopSettling?.(), POPUP_SETTLE_MS));
 
-      const stop = () => {
+      stopSettling = () => {
         observer.disconnect();
-        window.cancelAnimationFrame(frame);
-        window.clearTimeout(timer);
-        map.off("popupclose", onClose);
+        for (const timer of timers) window.clearTimeout(timer);
+        stopSettling = null;
       };
-      const onClose = (closed: PopupEvent) => {
-        if (closed.popup === event.popup) stop();
-      };
-      const timer = window.setTimeout(stop, POPUP_SETTLE_MS);
-      map.on("popupclose", onClose);
-      schedule();
     };
 
-    map.on("popupopen", keepPopupInView);
+    const onPopupClose = (event: PopupEvent) => {
+      if (event.popup !== openPopup) return;
+      openPopup = null;
+      stopSettling?.();
+    };
+
+    // --- Resize and rotation -----------------------------------------------
+
+    let resizeTimer = 0;
+    const onResize = () => {
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(() => {
+        const element = openPopup?.getElement();
+        if (element) adjustPopup(element);
+        else if (lastFit) frame(lastFit, false);
+      }, RESIZE_DEBOUNCE_MS);
+    };
+
+    map.on("popupopen", onPopupOpen);
+    map.on("popupclose", onPopupClose);
+    map.on("resize", onResize);
+    container.addEventListener("pointerdown", releaseCamera);
+    container.addEventListener("wheel", releaseCamera, { passive: true });
+    container.addEventListener("keydown", releaseCamera);
 
     // Hand the API out only once the map can be measured. Leaflet's flyTo divides
     // by the map's pixel size, so framing an episode deep-linked on first load
     // (when the container may still be 0px) would otherwise produce NaN.
-    const container = map.getContainer();
     const isMeasurable = () =>
       container.clientWidth > 0 && container.clientHeight > 0;
     const announce = () => {
@@ -245,21 +298,28 @@ function MapBridge({
       onReady(api);
     };
 
-    let observer: ResizeObserver | undefined;
+    let readyObserver: ResizeObserver | undefined;
     if (isMeasurable()) {
       announce();
     } else {
-      observer = new ResizeObserver(() => {
+      readyObserver = new ResizeObserver(() => {
         if (!isMeasurable()) return;
-        observer?.disconnect();
+        readyObserver?.disconnect();
         announce();
       });
-      observer.observe(container);
+      readyObserver.observe(container);
     }
 
     return () => {
-      observer?.disconnect();
-      map.off("popupopen", keepPopupInView);
+      readyObserver?.disconnect();
+      stopSettling?.();
+      window.clearTimeout(resizeTimer);
+      map.off("popupopen", onPopupOpen);
+      map.off("popupclose", onPopupClose);
+      map.off("resize", onResize);
+      container.removeEventListener("pointerdown", releaseCamera);
+      container.removeEventListener("wheel", releaseCamera);
+      container.removeEventListener("keydown", releaseCamera);
     };
   }, [map, registry, clusterRef, onReady, getInsets]);
 
@@ -297,8 +357,10 @@ export default function MapView({
 
   return (
     <MapContainer
-      center={[6, 15]}
-      zoom={3.5}
+      // Placeholder view: the explorer frames every episode as soon as the map
+      // is ready, which suits any screen size and the open sidebar.
+      center={[20, 15]}
+      zoom={2}
       zoomControl={false}
       worldCopyJump
       // `isolate` keeps Leaflet's high z-indexes below the floating UI.

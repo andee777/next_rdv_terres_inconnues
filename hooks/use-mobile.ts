@@ -1,19 +1,23 @@
-import * as React from "react"
+import * as React from "react";
 
-const MOBILE_BREAKPOINT = 768
+import { COMPACT_QUERY } from "@/lib/viewport";
+
+/**
+ * Customized from the shadcn original (it only checked the width). Short
+ * viewports, such as a phone held sideways, also count as "mobile": the sidebar
+ * becomes a sheet there, because a 360px-wide panel would leave no room for the
+ * episode list. `shadcn add --overwrite` would replace this file.
+ */
+function subscribe(onChange: () => void) {
+  const query = window.matchMedia(COMPACT_QUERY);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
 
 export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined)
-
-  React.useEffect(() => {
-    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
-    const onChange = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
-    }
-    mql.addEventListener("change", onChange)
-    setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
-    return () => mql.removeEventListener("change", onChange)
-  }, [])
-
-  return !!isMobile
+  return React.useSyncExternalStore(
+    subscribe,
+    () => window.matchMedia(COMPACT_QUERY).matches,
+    () => false,
+  );
 }

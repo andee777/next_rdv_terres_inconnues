@@ -8,7 +8,6 @@ import type { EpisodeMapApi, MapInsets } from "@/components/episode-map/types";
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import type { Episode } from "@/lib/episode";
 import { countCountries, uniqueHosts } from "@/lib/episode-utils";
-import { useWatched } from "@/lib/use-watched";
 
 import { EpisodeSidebar } from "./episode-sidebar";
 import { MapControls } from "./map-controls";
@@ -28,7 +27,10 @@ type EpisodeExplorerProps = { episodes: readonly Episode[] };
 export function EpisodeExplorer({ episodes }: EpisodeExplorerProps) {
   return (
     <SidebarProvider
-      style={{ "--sidebar-width": "24rem" } as CSSProperties}
+      // Fluid: narrow on tablets so the map keeps room, capped at 24rem.
+      style={
+        { "--sidebar-width": "clamp(18rem, 30vw, 24rem)" } as CSSProperties
+      }
       className="h-dvh min-h-0 overflow-hidden"
     >
       <Explorer episodes={episodes} />
@@ -38,7 +40,6 @@ export function EpisodeExplorer({ episodes }: EpisodeExplorerProps) {
 
 function Explorer({ episodes }: EpisodeExplorerProps) {
   const { open, setOpen, isMobile, setOpenMobile } = useSidebar();
-  const { watched, toggle: toggleWatched, clear: clearWatched } = useWatched();
   const {
     filters,
     patch,
@@ -49,7 +50,7 @@ function Explorer({ episodes }: EpisodeExplorerProps) {
     groups,
     filtersKey,
     isFiltered,
-  } = useEpisodeFilters(episodes, watched);
+  } = useEpisodeFilters(episodes);
 
   const [selected, setSelected] = useState<number | null>(null);
   const [hovered, setHovered] = useState<number | null>(null);
@@ -60,10 +61,6 @@ function Explorer({ episodes }: EpisodeExplorerProps) {
 
   const hosts = useMemo(() => uniqueHosts(episodes), [episodes]);
   const countryCount = useMemo(() => countCountries(episodes), [episodes]);
-  const knownEpisodes = useMemo(
-    () => new Set(episodes.map((episode) => episode.episode)),
-    [episodes],
-  );
 
   // Which part of the map the floating UI currently covers, in px: the open
   // sidebar on the left, or the "Episodes" pill at the top when the sidebar is
@@ -99,23 +96,34 @@ function Explorer({ episodes }: EpisodeExplorerProps) {
     [],
   );
 
-  const handleMapReady = useCallback(
-    (mapApi: EpisodeMapApi) => {
-      setApi(mapApi);
-      if (deepLinkHandled.current) return;
-      deepLinkHandled.current = true;
+  // Read through a ref so `handleMapReady` stays stable: the map re-registers
+  // its API whenever this callback changes.
+  const episodesRef = useRef(episodes);
+  useEffect(() => {
+    episodesRef.current = episodes;
+  });
 
-      // Deep link: /?episode=38 opens that episode's popup.
-      const requested = Number(
-        new URLSearchParams(window.location.search).get(EPISODE_PARAM),
-      );
-      if (Number.isInteger(requested) && knownEpisodes.has(requested)) {
-        setSelected(requested);
-        mapApi.focusEpisode(requested);
-      }
-    },
-    [knownEpisodes],
-  );
+  const handleMapReady = useCallback((mapApi: EpisodeMapApi) => {
+    setApi(mapApi);
+    if (deepLinkHandled.current) return;
+    deepLinkHandled.current = true;
+
+    // Deep link: /?episode=38 opens that episode's popup.
+    const all = episodesRef.current;
+    const requested = Number(
+      new URLSearchParams(window.location.search).get(EPISODE_PARAM),
+    );
+    if (
+      Number.isInteger(requested) &&
+      all.some((episode) => episode.episode === requested)
+    ) {
+      setSelected(requested);
+      mapApi.focusEpisode(requested);
+    } else {
+      // Otherwise show every episode, whatever the screen size.
+      mapApi.fitEpisodes(all, { animate: false });
+    }
+  }, []);
 
   // Reflect the open episode in the URL so any view can be shared.
   useEffect(() => {
@@ -161,18 +169,14 @@ function Explorer({ episodes }: EpisodeExplorerProps) {
 
   // --- Actions -------------------------------------------------------------
 
-  // Prefer something not watched yet, within the current results.
+  // A random episode from the current results, other than the open one.
   const surprise = useCallback(() => {
     const candidates = results.filter(
       (episode) => episode.episode !== selected,
     );
-    const unwatched = candidates.filter(
-      (episode) => !watched.has(episode.episode),
-    );
-    const pool = unwatched.length > 0 ? unwatched : candidates;
-    const pick = pool[Math.floor(Math.random() * pool.length)];
+    const pick = candidates[Math.floor(Math.random() * candidates.length)];
     if (pick) selectFromList(pick.episode);
-  }, [results, selected, watched, selectFromList]);
+  }, [results, selected, selectFromList]);
 
   // "/" focuses the search field, opening the sidebar first if needed.
   useEffect(() => {
@@ -209,9 +213,6 @@ function Explorer({ episodes }: EpisodeExplorerProps) {
         hosts={hosts}
         sort={sort}
         onSortChange={setSort}
-        watched={watched}
-        onToggleWatched={toggleWatched}
-        onResetWatched={clearWatched}
         selectedEpisode={selected}
         onSelectEpisode={selectFromList}
         onHoverEpisode={setHovered}
@@ -231,7 +232,11 @@ function Explorer({ episodes }: EpisodeExplorerProps) {
         />
       </main>
 
-      <MapControls api={api} onFit={fitToResults} />
+      <MapControls
+        api={api}
+        onFit={fitToResults}
+        popupOpen={selected !== null}
+      />
       <SidebarOpenButton count={results.length} />
     </>
   );

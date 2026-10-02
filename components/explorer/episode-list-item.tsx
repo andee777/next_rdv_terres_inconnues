@@ -1,13 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { Circle, CircleCheck, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 
-import {
-  SidebarMenuAction,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
+import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Episode } from "@/lib/episode";
 import { episodeTitle, highlightRanges } from "@/lib/episode-utils";
@@ -39,9 +35,7 @@ type EpisodeListItemProps = {
   episode: Episode;
   query: string;
   selected: boolean;
-  watched: boolean;
   onSelect: (episode: number) => void;
-  onToggleWatched: (episode: number) => void;
   onHover: (episode: number | null) => void;
 };
 
@@ -49,9 +43,7 @@ export function EpisodeListItem({
   episode,
   query,
   selected,
-  watched,
   onSelect,
-  onToggleWatched,
   onHover,
 }: EpisodeListItemProps) {
   const title = episodeTitle(episode);
@@ -69,7 +61,7 @@ export function EpisodeListItem({
         isActive={selected}
         aria-current={selected ? "true" : undefined}
         onClick={() => onSelect(episode.episode)}
-        className="h-auto items-start gap-3 rounded-lg py-2 pr-9 data-active:shadow-[inset_2px_0_0_var(--primary)]"
+        className="h-auto items-start gap-3 rounded-lg py-2 data-active:shadow-[inset_2px_0_0_var(--primary)]"
       >
         <span className="relative aspect-video w-20 shrink-0 overflow-hidden rounded-md bg-muted">
           {episode.thumbnail ? (
@@ -104,15 +96,6 @@ export function EpisodeListItem({
           </span>
         </span>
       </SidebarMenuButton>
-      <SidebarMenuAction
-        showOnHover={!watched}
-        aria-pressed={watched}
-        aria-label={watched ? "Mark as not watched" : "Mark as watched"}
-        title={watched ? "Mark as not watched" : "Mark as watched"}
-        onClick={() => onToggleWatched(episode.episode)}
-      >
-        {watched ? <CircleCheck className="text-primary" /> : <Circle />}
-      </SidebarMenuAction>
     </SidebarMenuItem>
   );
 }

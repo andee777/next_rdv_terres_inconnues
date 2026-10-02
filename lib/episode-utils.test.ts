@@ -18,7 +18,6 @@ import {
   tokenize,
   uniqueHosts,
 } from "./episode-utils";
-import { parseWatched, serializeWatched } from "./use-watched";
 
 function make(overrides: Partial<Episode> & { episode: number }): Episode {
   return {
@@ -37,8 +36,6 @@ function make(overrides: Partial<Episode> & { episode: number }): Episode {
     ...overrides,
   };
 }
-
-const none: ReadonlySet<number> = new Set();
 
 describe("normalize / tokenize", () => {
   it("strips diacritics, lowercases and collapses whitespace", () => {
@@ -127,42 +124,26 @@ describe("filterEpisodes", () => {
   ];
 
   it("returns everything with default filters", () => {
-    expect(filterEpisodes(data, DEFAULT_FILTERS, none)).toHaveLength(3);
+    expect(filterEpisodes(data, DEFAULT_FILTERS)).toHaveLength(3);
     expect(hasActiveFilters(DEFAULT_FILTERS)).toBe(false);
   });
 
   it("filters by host", () => {
-    const result = filterEpisodes(
-      data,
-      { ...DEFAULT_FILTERS, hosts: ["A"] },
-      none,
-    );
+    const result = filterEpisodes(data, { ...DEFAULT_FILTERS, hosts: ["A"] });
     expect(result.map((e) => e.episode)).toEqual([1, 3]);
   });
 
   it("keeps only episodes with a video", () => {
-    const result = filterEpisodes(
-      data,
-      { ...DEFAULT_FILTERS, onlyWithVideo: true },
-      none,
-    );
+    const result = filterEpisodes(data, {
+      ...DEFAULT_FILTERS,
+      onlyWithVideo: true,
+    });
     expect(result.map((e) => e.episode)).toEqual([1]);
-  });
-
-  it("hides watched episodes", () => {
-    const result = filterEpisodes(
-      data,
-      { ...DEFAULT_FILTERS, hideWatched: true },
-      new Set([1, 3]),
-    );
-    expect(result.map((e) => e.episode)).toEqual([2]);
   });
 
   it("combines filters and reports them as active", () => {
     const filters = { ...DEFAULT_FILTERS, hosts: ["A"], onlyWithVideo: true };
-    expect(filterEpisodes(data, filters, none).map((e) => e.episode)).toEqual([
-      1,
-    ]);
+    expect(filterEpisodes(data, filters).map((e) => e.episode)).toEqual([1]);
     expect(hasActiveFilters(filters)).toBe(true);
     expect(hasActiveFilters({ ...DEFAULT_FILTERS, query: "  " })).toBe(false);
   });
@@ -233,20 +214,5 @@ describe("real dataset", () => {
   it("has a handful of hosts and many countries", () => {
     expect(uniqueHosts(episodes).length).toBeGreaterThanOrEqual(3);
     expect(countCountries(episodes)).toBeGreaterThan(10);
-  });
-});
-
-describe("watched persistence format", () => {
-  it("round-trips a set through its serialized form, sorted", () => {
-    const raw = serializeWatched(new Set([3, 1, 2]));
-    expect(raw).toBe("[1,2,3]");
-    expect([...parseWatched(raw)]).toEqual([1, 2, 3]);
-  });
-
-  it("tolerates missing or corrupt storage", () => {
-    expect(parseWatched(null).size).toBe(0);
-    expect(parseWatched("not json").size).toBe(0);
-    expect(parseWatched('{"a":1}').size).toBe(0);
-    expect([...parseWatched('[1,"x",2.5,3]')]).toEqual([1, 3]);
   });
 });

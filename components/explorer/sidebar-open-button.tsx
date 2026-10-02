@@ -17,7 +17,7 @@ export function SidebarOpenButton({ count }: { count: number }) {
       onClick={toggleSidebar}
       aria-label="Open episode list"
       // The delay lets the sidebar finish sliding out before the pill fades in.
-      className="fixed top-3 left-3 z-10 h-10 animate-in gap-2 rounded-full bg-background pr-3 pl-3.5 shadow-lg delay-150 duration-200 fade-in-0 fill-mode-backwards dark:bg-background! dark:hover:bg-muted!"
+      className="fixed top-[max(0.75rem,env(safe-area-inset-top))] left-[max(0.75rem,env(safe-area-inset-left))] z-10 h-10 animate-in gap-2 rounded-full bg-background pr-3 pl-3.5 shadow-lg delay-150 duration-200 fade-in-0 fill-mode-backwards dark:bg-background! dark:hover:bg-muted! pointer-coarse:h-11"
     >
       <PanelLeft />
       Episodes

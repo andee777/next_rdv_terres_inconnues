@@ -31,7 +31,6 @@ import type { EpisodeFilters, SortOrder, YearGroup } from "@/lib/episode-utils";
 import { EpisodeListItem } from "./episode-list-item";
 import { FiltersPanel } from "./filters-panel";
 import { ThemeToggle } from "./theme-toggle";
-import { WatchProgress } from "./watch-progress";
 
 type EpisodeSidebarProps = {
   totalCount: number;
@@ -45,9 +44,6 @@ type EpisodeSidebarProps = {
   hosts: readonly string[];
   sort: SortOrder;
   onSortChange: (sort: SortOrder) => void;
-  watched: ReadonlySet<number>;
-  onToggleWatched: (episode: number) => void;
-  onResetWatched: () => void;
   selectedEpisode: number | null;
   onSelectEpisode: (episode: number) => void;
   onHoverEpisode: (episode: number | null) => void;
@@ -69,9 +65,6 @@ export function EpisodeSidebar({
   hosts,
   sort,
   onSortChange,
-  watched,
-  onToggleWatched,
-  onResetWatched,
   selectedEpisode,
   onSelectEpisode,
   onHoverEpisode,
@@ -102,132 +95,132 @@ export function EpisodeSidebar({
       collapsible="offcanvas"
       className="p-3 [&_[data-slot=sidebar-inner]]:rounded-2xl! [&_[data-slot=sidebar-inner]]:bg-sidebar/90! [&_[data-slot=sidebar-inner]]:shadow-2xl! [&_[data-slot=sidebar-inner]]:backdrop-blur-xl!"
     >
-      <SidebarHeader className="gap-3 p-4 pb-3">
-        <div className="flex items-center gap-3">
-          <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-            <Compass className="size-5" aria-hidden />
+      {/*
+        One wrapper so that on short screens (a phone held sideways) the header,
+        list and footer scroll together instead of squeezing the list to nothing.
+        On taller screens the header and footer stay put and only the list scrolls.
+      */}
+      <div className="flex min-h-0 flex-1 flex-col short:[scrollbar-width:thin] short:[scrollbar-color:var(--border)_transparent] short:overflow-y-auto">
+        <SidebarHeader className="gap-3 p-4 pb-3 compact:gap-2.5 compact:p-3 compact:pt-[max(0.75rem,env(safe-area-inset-top))] compact:pb-2">
+          <div className="flex items-center gap-3">
+            <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+              <Compass className="size-5" aria-hidden />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h1 className="font-heading text-[15px] leading-tight font-semibold tracking-tight text-balance">
+                Rendez-vous en terre inconnue
+              </h1>
+              <p className="mt-0.5 text-xs text-muted-foreground short:hidden">
+                Episode map · {countryCount} countries
+              </p>
+            </div>
+            <SidebarTrigger className="pointer-coarse:size-10" />
           </div>
-          <div className="min-w-0 flex-1">
-            <h1 className="font-heading text-[15px] leading-tight font-semibold tracking-tight text-balance">
-              Rendez-vous en terre inconnue
-            </h1>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Episode map · {countryCount} countries
-            </p>
+
+          <FiltersPanel
+            filters={filters}
+            onChange={onFiltersChange}
+            onReset={onFiltersReset}
+            isFiltered={isFiltered}
+            hosts={hosts}
+            sort={sort}
+            onSortChange={onSortChange}
+            resultCount={resultCount}
+            totalCount={totalCount}
+            searchRef={searchRef}
+            onArrowDown={() => items()[0]?.focus()}
+          />
+        </SidebarHeader>
+
+        <SidebarSeparator className="mx-0" />
+
+        <SidebarContent
+          ref={listRef}
+          onKeyDown={handleListKeyDown}
+          aria-label="Episodes"
+          className="[scrollbar-width:thin]! [scrollbar-color:var(--border)_transparent] short:flex-none short:overflow-visible"
+        >
+          {groups.length === 0 ? (
+            <Empty className="m-4 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <SearchX />
+                </EmptyMedia>
+                <EmptyTitle>No episodes found</EmptyTitle>
+                <EmptyDescription>
+                  Try another name, place or country, or loosen the filters.
+                </EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button variant="outline" size="sm" onClick={onFiltersReset}>
+                  Clear filters
+                </Button>
+              </EmptyContent>
+            </Empty>
+          ) : (
+            groups.map((group) => (
+              <SidebarGroup key={group.year ?? "undated"} className="p-0">
+                <SidebarGroupLabel className="sticky top-0 z-10 h-8 rounded-none bg-sidebar/80 px-4 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase backdrop-blur-md">
+                  {group.year ?? "Undated"}
+                  <span className="ml-auto font-normal tabular-nums">
+                    {group.episodes.length}
+                  </span>
+                </SidebarGroupLabel>
+                <SidebarGroupContent className="px-2 pb-1">
+                  <SidebarMenu>
+                    {group.episodes.map((episode) => (
+                      <EpisodeListItem
+                        key={episode.episode}
+                        episode={episode}
+                        query={filters.query}
+                        selected={episode.episode === selectedEpisode}
+                        onSelect={onSelectEpisode}
+                        onHover={onHoverEpisode}
+                      />
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            ))
+          )}
+        </SidebarContent>
+
+        <SidebarSeparator className="mx-0" />
+
+        <SidebarFooter className="gap-2.5 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] short:sticky short:bottom-0 short:z-10 short:bg-sidebar/95 short:backdrop-blur-md">
+          <div className="flex items-center gap-2">
+            <Button
+              className="flex-1 pointer-coarse:h-11"
+              onClick={onSurprise}
+              disabled={resultCount === 0}
+            >
+              <Dices />
+              Surprise me
+            </Button>
+            <ThemeToggle />
           </div>
-          <SidebarTrigger />
-        </div>
-
-        <WatchProgress
-          watched={watched.size}
-          total={totalCount}
-          onReset={onResetWatched}
-        />
-
-        <FiltersPanel
-          filters={filters}
-          onChange={onFiltersChange}
-          onReset={onFiltersReset}
-          isFiltered={isFiltered}
-          hosts={hosts}
-          sort={sort}
-          onSortChange={onSortChange}
-          resultCount={resultCount}
-          totalCount={totalCount}
-          searchRef={searchRef}
-          onArrowDown={() => items()[0]?.focus()}
-        />
-      </SidebarHeader>
-
-      <SidebarSeparator className="mx-0" />
-
-      <SidebarContent
-        ref={listRef}
-        onKeyDown={handleListKeyDown}
-        aria-label="Episodes"
-        className="[scrollbar-width:thin]! [scrollbar-color:var(--border)_transparent]"
-      >
-        {groups.length === 0 ? (
-          <Empty className="m-4 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <SearchX />
-              </EmptyMedia>
-              <EmptyTitle>No episodes found</EmptyTitle>
-              <EmptyDescription>
-                Try another name, place or country, or loosen the filters.
-              </EmptyDescription>
-            </EmptyHeader>
-            <EmptyContent>
-              <Button variant="outline" size="sm" onClick={onFiltersReset}>
-                Clear filters
-              </Button>
-            </EmptyContent>
-          </Empty>
-        ) : (
-          groups.map((group) => (
-            <SidebarGroup key={group.year ?? "undated"} className="p-0">
-              <SidebarGroupLabel className="sticky top-0 z-10 h-8 rounded-none bg-sidebar/80 px-4 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase backdrop-blur-md">
-                {group.year ?? "Undated"}
-                <span className="ml-auto font-normal tabular-nums">
-                  {group.episodes.length}
-                </span>
-              </SidebarGroupLabel>
-              <SidebarGroupContent className="px-2 pb-1">
-                <SidebarMenu>
-                  {group.episodes.map((episode) => (
-                    <EpisodeListItem
-                      key={episode.episode}
-                      episode={episode}
-                      query={filters.query}
-                      selected={episode.episode === selectedEpisode}
-                      watched={watched.has(episode.episode)}
-                      onSelect={onSelectEpisode}
-                      onToggleWatched={onToggleWatched}
-                      onHover={onHoverEpisode}
-                    />
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          ))
-        )}
-      </SidebarContent>
-
-      <SidebarSeparator className="mx-0" />
-
-      <SidebarFooter className="gap-2.5 p-3">
-        <div className="flex items-center gap-2">
-          <Button
-            className="flex-1"
-            onClick={onSurprise}
-            disabled={resultCount === 0}
-          >
-            <Dices />
-            Surprise me
-          </Button>
-          <ThemeToggle />
-        </div>
-        <p className="hidden items-center justify-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground md:flex md:flex-wrap">
-          <span className="flex items-center gap-1">
-            <Kbd>/</Kbd> search
-          </span>
-          <span className="flex items-center gap-1">
-            <KbdGroup>
-              <Kbd>↑</Kbd>
-              <Kbd>↓</Kbd>
-            </KbdGroup>
-            browse
-          </span>
-          <span className="flex items-center gap-1">
-            <KbdGroup>
-              <Kbd>Ctrl</Kbd>
-              <Kbd>B</Kbd>
-            </KbdGroup>
-            sidebar
-          </span>
-        </p>
-      </SidebarFooter>
+          {/* Keyboard hints: only useful with a keyboard, and no room for them on small screens. */}
+          <p className="hidden items-center justify-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground md:flex md:flex-wrap pointer-coarse:hidden! compact:hidden">
+            <span className="flex items-center gap-1">
+              <Kbd>/</Kbd> search
+            </span>
+            <span className="flex items-center gap-1">
+              <KbdGroup>
+                <Kbd>↑</Kbd>
+                <Kbd>↓</Kbd>
+              </KbdGroup>
+              browse
+            </span>
+            <span className="flex items-center gap-1">
+              <KbdGroup>
+                <Kbd>Ctrl</Kbd>
+                <Kbd>B</Kbd>
+              </KbdGroup>
+              sidebar
+            </span>
+          </p>
+        </SidebarFooter>
+      </div>
 
       <SidebarRail />
     </Sidebar>

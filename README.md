@@ -10,21 +10,32 @@ An interactive world map of the episodes of _Rendez-vous en terre inconnue_, the
 
 - Full-screen Leaflet map with OpenStreetMap tiles (attribution included)
 - Clustered markers that expand as you zoom in; hovering an episode in the list highlights its marker (or the cluster hiding it)
-- Episode popups built with [shadcn/ui](https://ui.shadcn.com): YouTube thumbnail (skeleton while it loads), people, location, celebrity, broadcast date, duration, "Watch video" and a watched toggle
+- Episode popups built with [shadcn/ui](https://ui.shadcn.com): YouTube thumbnail (skeleton while it loads), people, location, celebrity, broadcast date, duration and a "Watch video" button
 - shadcn-styled zoom and "fit all" controls
 - Light and dark themes that follow your system setting, with a manual toggle
 
 **Floating sidebar**
 
 - Accent-insensitive search across celebrity, people, place, country, host and episode number, with matches highlighted
-- Filters: host, "With video", "Unwatched"; sort newest or oldest first
+- Filters: host and "With video"; sort newest or oldest first
 - Episodes grouped by year with sticky headers and thumbnails
 - Selecting an episode flies the map to it (un-clustering if needed) and opens its popup; picking a marker on the map highlights and scrolls to its row. The camera accounts for the sidebar so nothing hides behind it
-- Watched tracking with a progress bar, saved in your browser (`localStorage`) and synced across tabs
-- "Surprise me" picks a random episode from the current results, preferring ones you haven't watched
+- "Surprise me" picks a random episode from the current results
 - Shareable deep links: opening an episode puts `?episode=38` in the URL
-- Collapses to a floating pill; becomes a slide-over sheet on mobile
+- Collapses to a floating pill; becomes a slide-over sheet on phones and whenever the screen is short
 - Keyboard friendly: see below
+
+**Responsive**
+
+Built to work on everything from a 320 px phone to an ultrawide monitor:
+
+- **Phones (portrait):** the sidebar is a sheet sized to the screen, its filters sit behind a "Filters" button so the list gets the room, and the map opens framed on every episode
+- **Phones (landscape):** the sheet scrolls as a single page, and episode popups switch to a side-by-side layout (thumbnail beside the details) so they fit the short screen
+- **Tablets:** a narrower floating sidebar that leaves the map room
+- **Large screens:** the sidebar and popups keep a comfortable maximum size
+- **Rotation and resizing:** the map re-frames itself and an open popup stays on screen
+- **Touch:** larger tap targets on touch devices, and zoom buttons get out of the way of an open popup
+- **Notches and home indicators:** the floating UI stays inside the safe area
 
 ### Keyboard shortcuts
 
@@ -88,9 +99,8 @@ CI (`.github/workflows/ci.yml`) runs lint, format check, typecheck, tests and bu
 │   ├── explorer/                   # The floating sidebar and everything that drives the map
 │   │   ├── episode-explorer.tsx    # State, selection, deep links, hotkeys, map framing
 │   │   ├── episode-sidebar.tsx     # Sidebar layout (header, filters, list, footer)
-│   │   ├── episode-list-item.tsx   # One row: thumbnail, highlighted text, watched toggle
-│   │   ├── filters-panel.tsx       # Search, host chips, switches, sort
-│   │   ├── watch-progress.tsx      # Progress bar and reset menu
+│   │   ├── episode-list-item.tsx   # One row: thumbnail, highlighted text
+│   │   ├── filters-panel.tsx       # Search, host chips, "With video" switch, sort
 │   │   ├── map-controls.tsx        # Zoom / fit buttons
 │   │   ├── sidebar-open-button.tsx # Floating pill shown when the sidebar is closed
 │   │   ├── theme-toggle.tsx
@@ -108,12 +118,13 @@ CI (`.github/workflows/ci.yml`) runs lint, format check, typecheck, tests and bu
 │   ├── episodes.ts                 # The episode dataset
 │   └── episodes.test.ts            # Data integrity tests
 ├── hooks/
-│   └── use-mobile.ts               # Added by shadcn (sidebar breakpoint)
+│   └── use-mobile.ts               # Sheet-vs-floating sidebar switch (customized from shadcn)
 ├── lib/
 │   ├── episode.ts                  # The Episode type
 │   ├── episode-utils.ts            # Search, filter, sort, group, highlight (pure functions)
 │   ├── episode-utils.test.ts
-│   ├── use-watched.ts              # localStorage-backed watched set
+│   ├── viewport.ts                 # Responsive thresholds, popup sizing, viewport hook
+│   ├── viewport.test.ts
 │   └── utils.ts                    # cn() helper
 ├── components.json                 # shadcn configuration
 └── next.config.ts                  # Allows remote thumbnails from i.ytimg.com

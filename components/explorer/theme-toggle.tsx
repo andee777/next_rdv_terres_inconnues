@@ -24,6 +24,7 @@ export function ThemeToggle() {
             size="icon"
             aria-label="Change theme"
             title="Change theme"
+            className="pointer-coarse:size-11"
           />
         }
       >

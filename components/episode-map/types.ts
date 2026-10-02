@@ -4,8 +4,15 @@ import type { Episode } from "@/lib/episode";
 export type EpisodeMapApi = {
   /** Flies to the episode (un-clustering it if needed) and opens its popup. */
   focusEpisode: (episode: number) => void;
-  /** Frames every given episode in the free space not covered by the UI. */
-  fitEpisodes: (episodes: readonly Episode[]) => void;
+  /**
+   * Frames every given episode in the free space not covered by the UI, and
+   * keeps them framed if the window is resized or rotated (until the user
+   * moves the map). Pass `{ animate: false }` for the initial framing.
+   */
+  fitEpisodes: (
+    episodes: readonly Episode[],
+    options?: { animate?: boolean },
+  ) => void;
   zoomIn: () => void;
   zoomOut: () => void;
 };

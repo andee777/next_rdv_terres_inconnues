@@ -10,6 +10,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { EpisodeMapApi } from "@/components/episode-map/types";
+import { cn } from "@/lib/utils";
 
 function ControlButton({
   label,
@@ -34,7 +35,7 @@ function ControlButton({
             onClick={onClick}
             // Solid in both themes: the outline variant is translucent in dark mode,
             // and `!` is needed to win over its `dark:bg-input/30`.
-            className="bg-background shadow-md hover:bg-muted dark:bg-background! dark:hover:bg-muted!"
+            className="bg-background shadow-md hover:bg-muted dark:bg-background! dark:hover:bg-muted! pointer-coarse:size-11"
           />
         }
       >
@@ -48,14 +49,26 @@ function ControlButton({
 type MapControlsProps = {
   api: EpisodeMapApi | null;
   onFit: () => void;
+  /**
+   * An episode popup is open. On compact screens there is no room for the
+   * popup and these buttons together (and touch users pinch to zoom), so the
+   * controls fade out while it is open.
+   */
+  popupOpen: boolean;
 };
 
 /** Zoom and re-frame controls, replacing Leaflet's default zoom buttons. */
-export function MapControls({ api, onFit }: MapControlsProps) {
+export function MapControls({ api, onFit, popupOpen }: MapControlsProps) {
   const disabled = api === null;
 
   return (
-    <div className="fixed right-3 bottom-9 z-10 flex flex-col gap-2 md:right-4">
+    <div
+      // Offsets include the safe-area insets so nothing hides under a notch or home indicator.
+      className={cn(
+        "fixed right-[max(0.75rem,env(safe-area-inset-right))] bottom-[calc(2.25rem+env(safe-area-inset-bottom))] z-10 flex flex-col gap-2 transition-opacity md:right-[max(1rem,env(safe-area-inset-right))]",
+        popupOpen && "compact:pointer-events-none compact:opacity-0",
+      )}
+    >
       <ButtonGroup orientation="vertical" aria-label="Zoom">
         <ControlButton
           label="Zoom in"

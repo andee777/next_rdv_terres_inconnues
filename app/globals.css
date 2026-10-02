@@ -14,6 +14,25 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Responsive variants shared with JavaScript (see lib/viewport.ts; keep the
+ * numbers in sync).
+ *  - `compact`: the sidebar is a sheet and its content is condensed (phones, and
+ *    anything short).
+ *  - `short`: little vertical space, e.g. a phone held sideways.
+ */
+@custom-variant compact {
+  /* Block form: the shorthand splits on the comma in a media query list. */
+  @media (max-width: 767px), (max-height: 560px) {
+    @slot;
+  }
+}
+@custom-variant short {
+  @media (max-height: 560px) {
+    @slot;
+  }
+}
+
 @theme inline {
   --font-heading: var(--font-sans);
   --font-sans: var(--font-sans);
@@ -167,5 +186,47 @@
 
   .marker-cluster.episode-marker-hover > div {
     box-shadow: 0 0 0 3px var(--primary);
+  }
+}
+
+/*
+ * Responsive polish.
+ *
+ * Unlayered on purpose: the shadcn sheet sets `w-3/4 sm:max-w-sm` through
+ * variant utilities, and only unlayered CSS beats utilities regardless of
+ * specificity. A 75% sheet is only 240px on a 320px phone, too narrow for the
+ * episode rows; this makes it fluid instead.
+ */
+[data-slot="sidebar"][data-mobile="true"] {
+  width: min(88vw, 22rem);
+  max-width: none;
+}
+
+/* Dragging the map must never pull the page to refresh or bounce on touch devices. */
+html,
+body {
+  overscroll-behavior: none;
+}
+
+/* Keep Leaflet's corner controls (attribution) clear of notches and home indicators. */
+@layer components {
+  .leaflet-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .leaflet-right {
+    padding-right: env(safe-area-inset-right);
+  }
+  .leaflet-left {
+    padding-left: env(safe-area-inset-left);
+  }
+}
+
+/*
+ * Ocean-colored map background, so the bands above and below the world (shown
+ * on tall, narrow screens where every episode must fit) read as sea, not grey.
+ */
+@layer components {
+  .leaflet-container {
+    background-color: #aad3df;
   }
 }
