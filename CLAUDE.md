@@ -21,6 +21,19 @@ Everything shared across coding agents (commands, architecture, data model, gotc
 3. For anything visible, start the `dev` server with the preview tools (`.claude/launch.json` exists, and `autoPort` is on because port 3000 is often taken by another process; never kill that process) and exercise it in the built-in browser. The checklist is under "Always" in `AGENTS.md`. To see dark mode, emulate the color scheme and **reload** (next-themes reads the system preference at startup).
 4. Stop the preview server when done, and reset anything you changed in the pane (viewport size, color scheme emulation).
 
+### Reproducing CI before a push
+
+Run CI's steps in order from a copy that holds **only tracked and untracked-but-not-ignored files**. A plain copy of the working folder also carries git-ignored generated files (`next-env.d.ts`, `.next`), which hid a lint failure that broke CI. Use a short path on Windows (long paths break Vitest):
+
+```bash
+D=/c/Users/<you>/AppData/Local/Temp/rdvf && rm -rf "$D" && mkdir -p "$D"
+git ls-files -z -co --exclude-standard | tar --null --ignore-failed-read -T - -cf - | tar -x -C "$D"
+cd "$D" && pnpm install --frozen-lockfile
+for s in lint format:check typecheck test build; do pnpm run $s || break; done
+```
+
+Delete the copy afterwards. If CI fails and you can't see why, `gh` may not be installed: the public API shows the failing step and its annotations (`/repos/<owner>/<repo>/actions/runs/<id>/jobs`, then `/check-runs/<job id>/annotations`); full logs need a login.
+
 ### Browser-pane testing tips
 
 These cost real time to discover:
